@@ -1,0 +1,33 @@
+<html>
+
+<head>
+  <title>Falcor with NodeJS and Express Demo</title>
+</head>
+
+<body>
+  <h1 id="message"></h1>
+</body>
+<script src="../node_modules/falcor/dist/falcor.browser.js"></script>
+<script>
+  var baseUrl = "http://mbalumuri-mac.esri.com:4000";
+
+  var model = new falcor.Model({
+    source: new falcor.HttpDataSource(baseUrl + "/model.json",  {
+        // Options here
+        // headers: {
+        //     // Any headers here
+        //     'Authorization': `bearer ' + token` // JWT
+        // },
+        withCredentials: false, // Cookies
+        // crossDomain: true // CORS
+    })
+  });
+  model.get(["moviesById", [1,2,3], ["name", "poster", "runtime"]])
+    .then(function (response) {
+      console.log(response);
+      var message = document.getElementById("message");
+      message.innerText = response.json.test
+    });
+</script>
+
+</html>
