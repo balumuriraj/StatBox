@@ -83,14 +83,9 @@ export class MovieModel {
     });
   }
 
-  static aggregate(fields, where: any): Promise<IMovie[]> {
-    return new Promise<IMovie[]>((resolve, reject) => {
-      const query = [
-        { $addFields: fields },
-        { $match: where }
-      ];
-
-      Movie.aggregate(query, (err: any, result: IMovie[]) => {
+  static aggregate(query: any): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+      Movie.aggregate(query, (err: any, result: any[]) => {
         if (err) {
           reject(err);
         }

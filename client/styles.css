@@ -1,0 +1,175 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700);
+html,
+body {
+  font-size: 1em;
+  font-family: "open Sans";
+}
+header {
+  background: #ffffff;
+  width: 100%;
+}
+header .header-container {
+  padding: 0 4em;
+}
+header .header-container .title-block {
+  display: inline-block;
+}
+header .header-container .title-block p {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.5em;
+  color: #555555;
+  padding: 0.5em 0;
+}
+header .header-container .title-block p span {
+  color: #999999;
+}
+header .header-container .menu-block {
+  display: inline-block;
+  float: right;
+}
+header .header-container .menu-block ul {
+  list-style: none;
+  margin: 0;
+}
+header .header-container .menu-block ul li {
+  display: inline-block;
+  cursor: pointer;
+  padding: 1.55em;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-top: 3px solid transparent;
+}
+header .header-container .menu-block ul li:hover {
+  color: #c0392b;
+}
+header .header-container .menu-block ul .active {
+  background: #eeeeee;
+  color: #c0392b;
+  border-top: 3px solid #c0392b;
+}
+.img-header {
+  position: relative;
+  background: #000000;
+  width: 100%;
+  height: 25em;
+}
+.img-header .img-container {
+  position: absolute;
+  left: 0;
+  width: 65%;
+  height: 100%;
+}
+.img-header .img-container .img-block {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-image: url("../img/poster.svg");
+  background-repeat: repeat;
+  -webkit-filter: blur(5px);
+  -moz-filter: blur(5px);
+  -o-filter: blur(5px);
+  -ms-filter: blur(5px);
+  filter: blur(5px);
+}
+.img-header .img-container .img-block .img-gradient {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  background: none;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+100&0.65+0,0+100;Neutral+Density */
+  background: -moz-linear-gradient(right, #000000 0%, rgba(0, 0, 0, 0) 20%);
+  /* FF3.6-15 */
+  background: -webkit-linear-gradient(right, #000000 0%, rgba(0, 0, 0, 0) 20%);
+  /* Chrome10-25,Safari5.1-6 */
+  background: linear-gradient(to left, #000000 0%, rgba(0, 0, 0, 0) 20%);
+  /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+.img-header .text-container {
+  position: absolute;
+  right: 0;
+  height: 100%;
+  width: 40%;
+  color: #ffffff;
+  z-index: 5;
+  background: -webkit-linear-gradient(left, rgba(0, 0, 0, 0), #000000);
+  /* For Safari 5.1 to 6.0 */
+  background: -o-linear-gradient(right, rgba(0, 0, 0, 0), #000000);
+  /* For Opera 11.1 to 12.0 */
+  background: -moz-linear-gradient(right, rgba(0, 0, 0, 0), #000000);
+  /* For Firefox 3.6 to 15 */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0), #000000);
+  /* Standard syntax (must be last) */
+}
+.img-header .text-container .text-block {
+  padding: 4em;
+  text-align: right;
+}
+.img-header .text-container .text-block .title {
+  margin: 0;
+  font-size: 2em;
+  font-weight: 600;
+}
+.img-header .text-container .text-block button {
+  background: #c0392b;
+  border: none;
+  outline: none;
+  padding: 0.75em 1.5em;
+}
+.page-block {
+  padding: 1em 4em;
+}
+.page-block .section-block {
+  padding: 1em 0;
+}
+.page-block .section-block p {
+  margin: 0;
+  font-size: 1.15em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.page-block .section-block .section-menu {
+  list-style: none;
+  margin: 0;
+  padding: 1em 0;
+}
+.page-block .section-block .section-menu li {
+  width: 10em;
+  display: inline-block;
+  cursor: pointer;
+  padding: 0.5em;
+  font-size: 0.75em;
+  font-weight: 600;
+  border-bottom: 3px solid #dddddd;
+  color: #bbbbbb;
+}
+.page-block .section-block .section-menu li:hover {
+  color: #555555;
+}
+.page-block .section-block .section-menu .active {
+  color: #c0392b;
+  border-bottom: 3px solid #c0392b;
+}
+.page-block .section-block .section-images {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.page-block .section-block .section-images li {
+  display: inline-block;
+  padding-right: 0.25em;
+}
+
+.page-block .section-block .section-images li:hover {
+  cursor: pointer;
+  transform: scale(1.05);
+}

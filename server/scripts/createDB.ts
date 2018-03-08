@@ -4,6 +4,9 @@ import { CriticModel } from "../services/critic/model";
 import { MovieModel } from "../services/movie/model";
 import { ReviewModel } from "../services/review/model";
 
+const numYears = 8; //8
+const startYear = 2017;
+
 async function performScrapeRequest(url: string) {
   console.log(url);
   return await JSDOM.fromURL(url)
@@ -14,7 +17,6 @@ async function performScrapeRequest(url: string) {
       return null;
     });
 }
-
 
 async function updateMovie(movie: IMovie) {
   const { url } = movie;
@@ -173,7 +175,7 @@ async function updateMovie(movie: IMovie) {
 
 async function getMovies(dom: HTMLDocument) {
   const movies: IMovie[] = [];
-  const moviesLists = [dom.getElementsByClassName("filmibeat-upcoming-movies-lists")[0]];
+  const moviesLists = dom.getElementsByClassName("filmibeat-upcoming-movies-lists");
 
   for (const moviesList of moviesLists) {
     const list = moviesList.getElementsByTagName("li");
@@ -205,30 +207,6 @@ async function getMovies(dom: HTMLDocument) {
       movies.push(movie);
     }
   }
-
-  return movies;
-}
-
-async function getDataFromScrapping() {
-  const movies: any[] = [];
-  const numYears = 1; //8
-  const startYear = 2017;
-  const endPoint = "https://www.filmibeat.com/telugu/movies/";
-
-  const startTime = Date.now();
-
-  for (let i = 0; i < numYears; i++) {
-    const year = startYear - i;
-    const url = endPoint + "january-" + year + ".html";
-
-    const dom: any = await performScrapeRequest(url);
-    const moviesData = await getMovies(dom);
-    movies.push(...moviesData);
-  }
-
-  const endTime = Date.now();
-  const timeTaken = (endTime - startTime) / 1000;
-  console.log("data scrapping completed!! TimeTaken: ", timeTaken);
 
   return movies;
 }
@@ -293,9 +271,7 @@ async function createReview(reviewData: IReview, movieId: string) {
   return reviewId;
 }
 
-async function createDB() {
-  const data: IMovie[] = await getDataFromScrapping();
-
+async function createDB(data: IMovie[]) {
   for (const movie of data) {
     const movieId = await MovieModel.create({
       name: movie.name,
@@ -325,7 +301,25 @@ async function createDB() {
   }
 }
 
-createDB();
+async function init() {
+  const endPoint = "https://www.filmibeat.com/telugu/movies/";
+  const startTime = Date.now();
+
+  for (let i = 0; i < numYears; i++) {
+    const year = startYear - i;
+    const url = endPoint + "january-" + year + ".html";
+
+    const dom: any = await performScrapeRequest(url);
+    const moviesData = await getMovies(dom);
+    await createDB(moviesData);
+  }
+
+  const endTime = Date.now();
+  const timeTaken = (endTime - startTime) / 1000;
+  console.log("database creation completed!! TimeTaken: ", timeTaken);
+}
+
+init();
 
 interface IMovie {
   name: string;

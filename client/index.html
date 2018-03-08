@@ -1,33 +1,109 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <title>Falcor with NodeJS and Express Demo</title>
+  <meta charset="UTF-8">
+  <title>Aaavakai</title>
+  <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 
-<body>
-  <h1 id="message"></h1>
-</body>
 <script src="../node_modules/falcor/dist/falcor.browser.js"></script>
-<script>
-  var baseUrl = "http://mbalumuri-mac.esri.com:4000";
+<script src="./app.js"></script>
 
-  var model = new falcor.Model({
-    source: new falcor.HttpDataSource(baseUrl + "/model.json",  {
-        // Options here
-        // headers: {
-        //     // Any headers here
-        //     'Authorization': `bearer ' + token` // JWT
-        // },
-        withCredentials: false, // Cookies
-        // crossDomain: true // CORS
-    })
-  });
-  model.get(["moviesById", [1,2,3], ["name", "poster", "runtime"]])
-    .then(function (response) {
-      console.log(response);
-      var message = document.getElementById("message");
-      message.innerText = response.json.test
-    });
-</script>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="title-block">
+        <p>
+          <span>aa</span>avakai</p>
+      </div>
+      <div class="menu-block">
+        <ul>
+          <li class="active">home</li>
+          <li>movies</li>
+          <li>celebs</li>
+          <li>watchlist</li>
+          <li>
+            <i class="fa fa-user"></i>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <div class="img-header">
+    <div class="img-container">
+      <div class="img-block">
+        <div class="img-gradient"></div>
+      </div>
+    </div>
+    <div class="text-container">
+      <div class="text-block">
+        <p class="title">aaavakai</p>
+        <p>find movies you want to watch based on genre, popularity, cast and many more</p>
+        <button>sign up</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-block">
+    <div class="section-block">
+      <p>YEAR 2017</p>
+
+      <ul class="section-menu">
+        <li class="active">this week</li>
+        <li>next week</li>
+        <li>next month</li>
+      </ul>
+
+      <ul class="section-images" id="movies"></ul>
+
+    </div>
+
+    <div class="section-block">
+      <p>born today</p>
+
+      <ul class="section-menu">
+        <li class="active">this week</li>
+        <li>next week</li>
+        <li>next month</li>
+      </ul>
+
+      <ul class="section-images">
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+        <li>
+          <img src="http://placehold.it/200x275">
+        </li>
+      </ul>
+    </div>
+  </div>
+</body>
 
 </html>
