@@ -2,28 +2,27 @@ import { Document, Model, Schema } from "mongoose";
 import { autoIncrement, mongoose } from "../../config/database";
 
 export interface IMovie extends Document {
-  name: string;
+  title: string;
+  description: string;
+  cert: string;
   url: string;
   poster: string;
   genre: [string];
   runtime: number;
   releasedate: Date;
-  castIds: [number];
-  crewIds: [number];
+  rating: number;
 }
 
-// To remove deprecation error
-// mongoose.Promise = global.Promise;
-
 const movieSchema = new Schema({
-  name: String,
+  title: String,
+  description: String,
+  cert: String,
   url: String,
   poster: String,
   genre: [String],
   runtime: Number,
   releasedate: Date,
-  castIds: [Number],
-  crewIds: [Number]
+  rating: Number
 });
 
 movieSchema.plugin(autoIncrement.plugin, { model: "Movie", startAt: 1 });
@@ -33,10 +32,10 @@ const Movie = mongoose.model<IMovie>("Movie", movieSchema, "Movies");
 export class MovieModel {
   constructor() {}
 
-  static create(props?: any): Promise<string> {
+  static create(props?: any): Promise<number> {
     const model = new Movie(props);
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       model.save((err: any, result: IMovie) => {
         if (err) {
           reject(err);
@@ -47,7 +46,7 @@ export class MovieModel {
     });
   }
 
-  static update(id: string, update: any): Promise<IMovie> {
+  static update(id: number, update: any): Promise<IMovie> {
     return new Promise<IMovie>((resolve, reject) => {
       Movie.findByIdAndUpdate(id, update, (err: any, result: IMovie) => {
         if (err) {
@@ -71,7 +70,7 @@ export class MovieModel {
     });
   }
 
-  static findById(id: string): Promise<IMovie> {
+  static findById(id: number): Promise<IMovie> {
     return new Promise<IMovie>((resolve, reject) => {
       Movie.findById(id, (err: any, result: IMovie) => {
         if (err) {

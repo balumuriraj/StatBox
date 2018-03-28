@@ -2,18 +2,15 @@ import { Document, Model, Schema } from "mongoose";
 import { autoIncrement, mongoose } from "../../config/database";
 
 export interface IReview extends Document {
-  criticId: string;
-  movieId: string;
+  critic: string;
+  movieId: number;
   url: string;
   rating: number;
 }
 
-// To remove deprecation error
-// mongoose.Promise = global.Promise;
-
 const reviewSchema = new Schema({
-  criticId: String,
-  movieId: String,
+  critic: String,
+  movieId: Number,
   url: String,
   rating: Number
 });
@@ -25,10 +22,10 @@ const Review = mongoose.model<IReview>("Review", reviewSchema, "Reviews");
 export class ReviewModel {
   constructor() {}
 
-  static create(props?: any): Promise<string> {
+  static create(props?: any): Promise<number> {
     const model = new Review(props);
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       model.save((err: any, result: IReview) => {
         if (err) {
           reject(err);
@@ -39,7 +36,7 @@ export class ReviewModel {
     });
   }
 
-  static update(id: string, update: any): Promise<IReview> {
+  static update(id: number, update: any): Promise<IReview> {
     return new Promise<IReview>((resolve, reject) => {
       Review.findByIdAndUpdate(id, update, (err: any, result: IReview) => {
         if (err) {
@@ -63,9 +60,21 @@ export class ReviewModel {
     });
   }
 
-  static findById(id: string): Promise<IReview> {
+  static findById(id: number): Promise<IReview> {
     return new Promise<IReview>((resolve, reject) => {
       Review.findById(id, (err: any, result: IReview) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve(result);
+      });
+    });
+  }
+
+  static aggregate(query: any): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+      Review.aggregate(query, (err: any, result: any[]) => {
         if (err) {
           reject(err);
         }

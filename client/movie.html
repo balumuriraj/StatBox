@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>StatBox</title>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css" />
+  <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<script src="../node_modules/falcor/dist/falcor.browser.js"></script>
+<script src="../dist/client/movie.js"></script>
+
+<body>
+  <div class=content-container>
+    <div class="section-container">
+
+      <div class="header-block">
+        <div class="movie-background" id="background">
+          <img src="" />
+          <div class="gradient"></div>
+        </div>
+        <nav>
+          <a href="/apps/StatBox/client/">
+            <i class="fas fa-caret-left"></i> Back
+          </a>
+          <a href="#">
+            <i class="fas fa-share-alt"></i> Share
+          </a>
+        </nav>
+        <section>
+          <div class="poster-block" id="poster">
+            <img src="" />
+          </div>
+          <div class="text-block">
+            <p class="title" id="title">Title</p>
+            <div class="genre-list" id="genreList"></div>
+            <p id="dateTime"></p>
+            <p class="description" id="description">
+              Coming Sooon..
+            </p>
+            <div class="rating">
+              <div class="stars"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="section-container">
+      <div class="main-block">
+        <div class="menu">
+          <ul id="nav">
+            <li item="stats" class="active">stats</li>
+            <li item="cast">cast</li>
+            <li item="crew">crew</li>
+            <li item="reviews">reviews</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <div class="active">
+            <div class="stats" id="stats">
+              <div class="charts-block">
+                <p>
+                  <span>critic ratings</span> for this movie</p>
+                <div class="ct-chart" id="criticRatingsChart"></div>
+                <p>
+                  <span>ratings</span> of all the movies released this month</p>
+                <div class="ct-chart" id="ratingsChart"></div>
+                <p>
+                  <span>runtimes</span> of all the movies released this month</p>
+                <div class="ct-chart" id="runtimesChart"></div>
+              </div>
+              <div class="info-block">
+                <div class="card">
+                  <p class="rating">3.5</p>
+                  <p class="text">rating</p>
+                </div>
+                <div class="card">
+                  <p class="count">148</p>
+                  <p class="text">runtime</p>
+                </div>
+                <div class="card">
+                  <p class="count">1354</p>
+                  <p class="text">page views</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="celeb" id="cast"></div>
+          </div>
+
+          <div>
+            <div class="celeb" id="crew"></div>
+          </div>
+
+          <div>
+            <div class="reviews" id="reviews"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

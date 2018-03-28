@@ -3,18 +3,16 @@ import { autoIncrement, mongoose } from "../../config/database";
 
 export interface ICeleb extends Document {
   name: string;
-  url: string;
+  hash: string;
   photo: string;
   dob: Date;
-  movieIds: [number];
 }
 
 const celebSchema = new Schema({
   name: String,
-  url: String,
+  hash: String,
   photo: String,
-  dob: Date,
-  movieIds: [Number]
+  dob: Date
 });
 
 celebSchema.plugin(autoIncrement.plugin, { model: "Celeb", startAt: 1 });
@@ -24,10 +22,10 @@ const Celeb = mongoose.model<ICeleb>("Celeb", celebSchema, "Celebs");
 export class CelebModel {
   constructor() {}
 
-  static create(props?: any): Promise<string> {
+  static create(props?: any): Promise<number> {
     const model = new Celeb(props);
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       model.save((err: any, result: ICeleb) => {
         if (err) {
           reject(err);
@@ -38,7 +36,7 @@ export class CelebModel {
     });
   }
 
-  static update(id: string, update: any): Promise<ICeleb> {
+  static update(id: number, update: any): Promise<ICeleb> {
     return new Promise<ICeleb>((resolve, reject) => {
       Celeb.findByIdAndUpdate(id, update, (err: any, result: ICeleb) => {
         if (err) {
@@ -62,7 +60,7 @@ export class CelebModel {
     });
   }
 
-  static findById(id: string): Promise<ICeleb> {
+  static findById(id: number): Promise<ICeleb> {
     return new Promise<ICeleb>((resolve, reject) => {
       Celeb.findById(id, (err: any, result: ICeleb) => {
         if (err) {

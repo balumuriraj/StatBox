@@ -14,15 +14,18 @@ async function generateMoviesData(movies: IMovie[]) {
 async function generateMovieData(movie: IMovie) {
   return {
     id: movie._id,
-    name: movie.name,
+    title: movie.title,
+    description: movie.description,
+    cert: movie.cert,
     poster: movie.poster,
     genre: movie.genre,
     runtime: movie.runtime,
-    releasedate: movie.releasedate
+    releasedate: movie.releasedate,
+    rating: movie.rating
   };
 }
 
-export async function findMovieById(id: string) {
+export async function findMovieById(id: number) {
   const movie = await MovieModel.findById(id);
   return await generateMovieData(movie);
 }

@@ -6,7 +6,8 @@
         "server/**/*.spec.ts"
     ],
     "watch": [
-        "server/**/*.ts"
+        "server/**/*.ts",
+        "client/**/*.ts"
     ],
     "env": {
         "NODE_ENV": "development",

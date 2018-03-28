@@ -1,19 +1,27 @@
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700);
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,500,700);
 html,
 body {
   font-size: 1em;
-  font-family: "open Sans";
+  font-family: "Roboto";
+  letter-spacing: 0.25px;
+  margin: 0;
+  padding: 0;
 }
+
 header {
   background: #ffffff;
+  /* #0a1016 -> dark */
   width: 100%;
 }
+
 header .header-container {
   padding: 0 4em;
 }
+
 header .header-container .title-block {
   display: inline-block;
 }
+
 header .header-container .title-block p {
   margin: 0;
   font-weight: bold;
@@ -21,17 +29,21 @@ header .header-container .title-block p {
   color: #555555;
   padding: 0.5em 0;
 }
+
 header .header-container .title-block p span {
   color: #999999;
 }
+
 header .header-container .menu-block {
   display: inline-block;
   float: right;
 }
+
 header .header-container .menu-block ul {
   list-style: none;
   margin: 0;
 }
+
 header .header-container .menu-block ul li {
   display: inline-block;
   cursor: pointer;
@@ -41,26 +53,36 @@ header .header-container .menu-block ul li {
   text-transform: uppercase;
   border-top: 3px solid transparent;
 }
+
 header .header-container .menu-block ul li:hover {
   color: #c0392b;
 }
+
 header .header-container .menu-block ul .active {
   background: #eeeeee;
   color: #c0392b;
   border-top: 3px solid #c0392b;
 }
+
 .img-header {
   position: relative;
   background: #000000;
   width: 100%;
   height: 25em;
+
+  background: #CB356B;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to bottom, #BD3F32, #CB356B);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to bottom, #BD3F32, #CB356B); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
 }
+
 .img-header .img-container {
   position: absolute;
   left: 0;
   width: 65%;
   height: 100%;
 }
+
 .img-header .img-container .img-block {
   position: relative;
   width: 100%;
@@ -74,6 +96,7 @@ header .header-container .menu-block ul .active {
   -ms-filter: blur(5px);
   filter: blur(5px);
 }
+
 .img-header .img-container .img-block .img-gradient {
   position: absolute;
   z-index: 2;
@@ -82,15 +105,9 @@ header .header-container .menu-block ul .active {
   bottom: 0;
   left: 0;
   height: 100%;
-  background: none;
-  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+100&0.65+0,0+100;Neutral+Density */
-  background: -moz-linear-gradient(right, #000000 0%, rgba(0, 0, 0, 0) 20%);
-  /* FF3.6-15 */
-  background: -webkit-linear-gradient(right, #000000 0%, rgba(0, 0, 0, 0) 20%);
-  /* Chrome10-25,Safari5.1-6 */
-  background: linear-gradient(to left, #000000 0%, rgba(0, 0, 0, 0) 20%);
-  /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  background: "black";
 }
+
 .img-header .text-container {
   position: absolute;
   right: 0;
@@ -98,78 +115,470 @@ header .header-container .menu-block ul .active {
   width: 40%;
   color: #ffffff;
   z-index: 5;
-  background: -webkit-linear-gradient(left, rgba(0, 0, 0, 0), #000000);
-  /* For Safari 5.1 to 6.0 */
-  background: -o-linear-gradient(right, rgba(0, 0, 0, 0), #000000);
-  /* For Opera 11.1 to 12.0 */
-  background: -moz-linear-gradient(right, rgba(0, 0, 0, 0), #000000);
-  /* For Firefox 3.6 to 15 */
-  background: linear-gradient(to right, rgba(0, 0, 0, 0), #000000);
-  /* Standard syntax (must be last) */
+  background: "black";
 }
+
 .img-header .text-container .text-block {
   padding: 4em;
   text-align: right;
 }
+
 .img-header .text-container .text-block .title {
   margin: 0;
   font-size: 2em;
   font-weight: 600;
 }
+
 .img-header .text-container .text-block button {
   background: #c0392b;
   border: none;
   outline: none;
   padding: 0.75em 1.5em;
 }
+
 .page-block {
-  padding: 1em 4em;
+  padding: 1em;
 }
+
 .page-block .section-block {
   padding: 1em 0;
 }
+
 .page-block .section-block p {
   margin: 0;
   font-size: 1.15em;
   font-weight: 600;
   text-transform: uppercase;
+  padding: 0em 4em;
 }
+
 .page-block .section-block .section-menu {
   list-style: none;
   margin: 0;
-  padding: 1em 0;
+  padding: 1em 4em;
 }
+
 .page-block .section-block .section-menu li {
-  width: 10em;
+  width: 7.5em;
   display: inline-block;
   cursor: pointer;
   padding: 0.5em;
+  margin-right: 0.25em;
   font-size: 0.75em;
   font-weight: 600;
   border-bottom: 3px solid #dddddd;
   color: #bbbbbb;
 }
+
 .page-block .section-block .section-menu li:hover {
   color: #555555;
 }
+
 .page-block .section-block .section-menu .active {
   color: #c0392b;
   border-bottom: 3px solid #c0392b;
 }
+
+.page-block .section-block .in-active {
+  display: none;
+}
+
 .page-block .section-block .section-images {
   list-style: none;
-  margin: 0;
+  margin: 0 4em 0 0;
   padding: 0;
   white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
 }
+
 .page-block .section-block .section-images li {
   display: inline-block;
-  padding-right: 0.25em;
+  padding-right: 0.5em;
+  margin: 1em 0.5em 4em 0.5em;
 }
 
-.page-block .section-block .section-images li:hover {
+.page-block .section-block .section-images li:first-child {
+  margin-left: 4em;
+}
+
+.page-block .section-block .section-images li img {
+  border-radius: 4px;
+  box-shadow: 0 20px 60px 0 rgba(48,25,131,0.3);
+}
+
+.page-block .section-block .section-images li img:hover {
   cursor: pointer;
-  transform: scale(1.05);
+  transform: scale(1.1);
+}
+
+.page-block .section-block .section-images li img:active {
+  transform: scale(1.08);
+}
+
+/* movie.html */
+
+.content-container {
+  background: #0a1016;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.content-container .section-container {
+  position: relative;
+  flex-grow: 1;
+}
+
+.movie-background {
+  overflow: hidden;
+  background: #0a1016;
+}
+
+.movie-background img {
+  position: fixed;
+  width: 100%;
+  height: auto;
+  -webkit-filter: blur(10px);
+  -moz-filter: blur(10px);
+  -o-filter: blur(10px);
+  -ms-filter: blur(10px);
+  filter: blur(10px);
+}
+
+.movie-background .gradient {
+  position:absolute;
+  top: 0; right:0; bottom:0; left:0;
+  height: 100%;
+  background: none;
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#0a1016+0,0a1016+100&0.33+0,1+100 */
+background: -moz-linear-gradient(top, rgba(10,16,22,0.33) 0%, rgba(10,16,22,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top, rgba(10,16,22,0.33) 0%,rgba(10,16,22,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom, rgba(10,16,22,0.33) 0%,rgba(10,16,22,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#540a1016', endColorstr='#0a1016',GradientType=0 ); /* IE6-9 */
+}
+
+.header-block {
+  color: white;
+  opacity: 0.85;
+  position: relative;
+  display: flex;
+  flex-flow: column;
+}
+
+.header-block nav {
+  height: 4em;
+  display: flex;
+  flex-flow: row; 
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-block nav a {
+  text-decoration: none;
+  color: white;
+  opacity: 0.85;
+  font-weight: bold;
+  margin: 0 4em;
+}
+
+.header-block section {
+  z-index: 5em;
+  position: relative;
+  display: flex;
+  flex-flow: row;
+  flex-grow: 1;
+  justify-content: center;
+  padding: 2em 0 5em 0;
+}
+
+.header-block section .poster-block {
+  padding: 0 1em;
+}
+
+.header-block section .text-block {
+  width: 40em;
+  /* align-self: flex-start; */
+  text-align: left;
+  padding: 0 1em;
+}
+
+.header-block section .text-block .title {
+  margin: 0;
+  font-size: 2em;
+  font-weight: bold;
+  padding-bottom: 0.5em;
+}
+
+.header-block section .text-block p span {
+  padding-right: 1em;
+  font-size: 0.9em;
+}
+
+.header-block section .text-block .genre-list span {
+  font-size: 0.9em;
+  padding: 0.25em 0.5em;
+  margin-right: 0.5em;
+  background: rgba(255,255,255,0.25);
+  border-radius: 3px;
+  cursor: pointer;
+  font: 700;
+}
+
+.header-block section .text-block .description {
+  font-size: 1.05em;
+}
+
+.stars {
+  font-size: 1.25em;
+  display: inline-block;
+  position: relative;
+}
+ 
+.stars::before {
+  font-family: "Font Awesome 5 Free";
+  color: #feca57;
+  content: "\f005 \f005 \f005 \f005 \f005";
+}
+
+.stars::after {
+  position: absolute;
+  top: 1px;
+  left: 0px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  color: #feca57;
+  content: "\f005 \f005 \f005 \f089";
+}
+
+.main-block {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: #ecf0f1;
+}
+
+.main-block .menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #0a1016;
+}
+
+.main-block .menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 4em;
+  text-align: center;
+}
+
+.main-block .menu ul li {
+  text-transform: uppercase;
+  width: 10em;
+  display: inline-block;
+  cursor: pointer;
+  padding: 0.75em 0em;
+  margin-right: 0;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  border-top: 3px solid #0a1016;
+}
+
+.main-block .menu ul li:hover {
+  border-top: 3px solid #feca57;
+}
+
+.main-block .menu .active {
+  background: #feca57;
+}
+
+.main-block .content-block {
+  height: auto;
+  padding: 1em 4em;
+}
+
+.main-block .content-block > div {
+  display: none;
+}
+
+.main-block .content-block .active {
+  display: block;
+}
+
+.main-block .content-block .celeb {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+}
+
+.main-block .content-block .celeb .card {
+  cursor: pointer;
+  text-align: center;
+  border-radius: 8px;
+  color: #0a1016;
+  width: 12em;
+  height: 15em;
+  margin: 1em;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  box-shadow: 0 20px 60px 0 rgba(48,25,131,0.3);
+  background: white;
+}
+
+.main-block .content-block .celeb .card:active {
+  transform: scale(0.98);
+}
+
+.main-block .content-block .celeb .card img {
+  width: 8rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #D8D8D8;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.2), 0 4px 6px 0 rgba(0,0,0,0.1);
+  background-size: cover;
+  background-position: center;
+}
+
+.main-block .content-block .celeb .card p {
+  margin: 0;
+  padding: 0;
+}
+
+.main-block .content-block .celeb .card .name {
+  font-weight: bold;
+}
+
+.main-block .content-block .celeb .card .dob {
+  font-size: 0.75em;
+}
+
+.stats {
+  padding: 2em 4em;
+  display: flex;
+  justify-content: space-around;
+}
+
+.stats .charts-block {
+  padding: 1em;
+  flex-grow: 1;
+
+  border-radius: 8px;
+  color: #0a1016;
+  margin: 1em;
+  padding: 1em;
+  box-shadow: 0 20px 60px 0 rgba(48,25,131,0.3);
+  background: white;
+}
+
+.stats .charts-block p {
+  text-transform: uppercase;
+  margin: 0;
+  padding: 2em 1em;
+  font-size: 0.75em;
+}
+
+.stats .charts-block p span {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.stats .info-block {
+  padding: 0 1em;
+}
+
+.stats .info-block .card {
+  cursor: pointer;
+  text-align: center;
+  border-radius: 8px;
+  color: #0a1016;
+  width: 10em;
+  height: 10em;
+  margin: 1em;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  box-shadow: 0 20px 60px 0 rgba(48,25,131,0.3);
+  background: white;
+}
+
+.stats .info-block .card p {
+  margin: 0;
+  padding: 0;
+}
+
+.stats .info-block .card .count {
+  font-size: 2.5em;
+  font-weight: bold;
+  opacity: 0.5;
+}
+
+.stats .info-block .card .text {
+  text-transform: uppercase;
+  font-size: 0.75em;
+  opacity: 0.5;
+}
+
+.stats .info-block .card .rating {
+  background: #f1c40f;
+  padding: 0.5em;
+  font-size: 3em;
+  font-weight: bold;
+  color: white;
+}
+
+.ct-chart {
+  margin-bottom: 2em;
+  height: 15em;
+}
+
+.ct-series line {
+  stroke-width: 1em !important;
+}
+
+.main-block .content-block .reviews {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+}
+
+.main-block .content-block .reviews .card {
+  cursor: pointer;
+  text-align: center;
+  border-radius: 8px;
+  color: #0a1016;
+  width: 10em;
+  height: 10em;
+  margin: 1em;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  box-shadow: 0 20px 60px 0 rgba(48,25,131,0.3);
+  background: white;
+}
+
+.main-block .content-block .reviews .card .text {
+  text-transform: uppercase;
+  font-size: 0.75em;
+  opacity: 0.5;
+}
+
+.main-block .content-block .reviews .card .rating {
+  background: #f1c40f;
+  width: 3em; 
+  padding: 1em 0;
+  margin: 0;
+  font-size: 2em;
+  font-weight: bold;
+  color: white;
 }
