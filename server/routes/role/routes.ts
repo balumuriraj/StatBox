@@ -1,5 +1,5 @@
 import * as jsonGraph from "falcor-json-graph";
-import { findRoleById, findRolesByMovieId, findRolesCountByMovieId } from "../../services/role/service";
+import { findRoleById, findRolesByCelebId, findRolesByMovieId, findRolesCountByCelebId, findRolesCountByMovieId } from "../../services/role/service";
 
 const $ref = jsonGraph.ref;
 
@@ -136,6 +136,60 @@ async function getCrewByMovieIds(params: any) {
   return results;
 }
 
+async function getMoviesCountByCelebId(params: any) {
+  const { celebIds } = params;
+  const results: any[] = [];
+
+  for (const celebId of celebIds) {
+    const rows = await findRolesCountByCelebId(celebId);
+    let value = rows && rows[0] && rows[0].count;
+
+    if (value == null) {
+      value = null;
+    }
+
+    results.push({
+      path: ["moviesByCastId", celebId, "movies", "length"],
+      value
+    });
+  }
+
+  return results;
+}
+
+async function getMoviesByCelebId(params: any) {
+  const { celebIds, movieIndices } = params;
+  const results: any[] = [];
+
+  for (const celebId of celebIds) {
+    const roles = await findRolesByCelebId(celebId);
+
+    if (!roles.length) {
+      results.push({
+        path: ["moviesByCelebId", celebId],
+        value: null
+      });
+    }
+    else {
+      for (const movieIndex of movieIndices) {
+        let value: any = null;
+        const role = roles[movieIndex];
+
+        if (celebId && role) {
+          value = $ref(["moviesById", role.movieId]);
+        }
+
+        results.push({
+          path: ["moviesByCelebId", celebId, "movies", movieIndex],
+          value
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "rolesById[{integers:roleIds}]['id','type','category','celeb']",
@@ -156,5 +210,13 @@ export default [
   {
     route: "crewByMovieId[{integers:movieIds}].roles[{integers:roleIndices}]",
     get: getCrewByMovieIds
+  },
+  {
+    route: "moviesByCelebId[{integers:celebIds}].movies.length",
+    get: getMoviesCountByCelebId
+  },
+  {
+    route: "moviesByCelebId[{integers:celebIds}].movies[{integers:movieIndices}]",
+    get: getMoviesByCelebId
   }
 ];

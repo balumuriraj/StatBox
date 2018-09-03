@@ -1,6 +1,6 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
-import { findMovieById, findMoviesByDate, findMoviesCountByDate } from "../../services/movie/service";
+import { findMovieById, findMoviesBetweenDates, findMoviesByDate, findMoviesCountBetweenDates, findMoviesCountByDate } from "../../services/movie/service";
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
@@ -213,6 +213,61 @@ async function getMoviesByYearsMonthsdays(params: any) {
   return results;
 }
 
+async function getMoviesCountBetweenDates(params: any) {
+  const { dates1, dates2 } = params;
+  const date1 = dates1[0];
+  const date2 = dates2[0];
+  const results: any[] = [];
+
+  const rows = await findMoviesCountBetweenDates(date1, date2);
+  let value = rows && rows[0] && rows[0].count;
+
+  if (value == null) {
+    value = null;
+  }
+
+  results.push({
+    path: ["moviesCountBetweenDates", date1, date2, "movies", "length"],
+    value
+  });
+
+  return results;
+}
+
+async function getMoviesBetweenDates(params: any) {
+  const { dates1, dates2, movieIndices } = params;
+  const date1 = dates1[0];
+  const date2 = dates2[0];
+  const results: any[] = [];
+
+  const movies = await findMoviesBetweenDates(date1, date2);
+
+  if (!movies.length) {
+    results.push({
+      path: ["moviesBetweenDates", date1, date2],
+      value: null
+    });
+  }
+  else {
+    for (const movieIndex of movieIndices) {
+      let value: any = null;
+      const movie = movies[movieIndex];
+      const movieId = movie && movie.id;
+
+      if (movieId) {
+        value = $ref(["moviesById", movieId]);
+      }
+
+      results.push({
+        path: ["moviesBetweenDates", date1, date2, "movies", movieIndex],
+        value
+      });
+    }
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "moviesById[{integers:movieIds}]['id','title','description','cert', 'date','poster','runtime','genre']",
@@ -241,5 +296,13 @@ export default [
   {
     route: "moviesByYearMonthDay[{integers:years}][{integers:months}][{integers:days}].movies[{integers:movieIndices}]",
     get: getMoviesByYearsMonthsdays
+  },
+  {
+    route: "moviesCountBetweenDates[{integers:dates1}][{integers:dates2}].movies.length",
+    get: getMoviesCountBetweenDates
+  },
+  {
+    route: "moviesBetweenDates[{integers:dates1}][{integers:dates2}].movies[{integers:movieIndices}]",
+    get: getMoviesBetweenDates
   }
 ];

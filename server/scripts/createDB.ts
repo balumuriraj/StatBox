@@ -8,7 +8,8 @@ import { ReviewModel } from "../services/review/model";
 import { RoleModel } from "../services/role/model";
 
 const numYears = 1; //8
-const startYear = 2001;
+const startYear = 2017;
+const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october"];
 const criticsInfo = [
   {
     name: "filmibeat",
@@ -63,6 +64,10 @@ async function updateMovie(movie: IMovie) {
   const { url } = movie;
   const dom: any = await performScrapeRequest(url);
   const mainBlock = dom.getElementsByClassName("filmibeat-db-movierightcol")[0];
+
+  if (!mainBlock) {
+    return;
+  }
 
   const titleBlock = mainBlock.children[0];
 
@@ -422,11 +427,14 @@ async function initDB() {
 
   for (let i = 0; i < numYears; i++) {
     const year = startYear - i;
-    const url = endPoint + "january-" + year + ".html";
 
-    const dom: any = await performScrapeRequest(url);
-    const moviesData = await getMovies(dom);
-    await createDB(moviesData);
+    for (const month of months) {
+      // const url = endPoint + month + "-" + year + ".html";
+      const url = `${endPoint}${month}-${year}.html`;
+      const dom: any = await performScrapeRequest(url);
+      const moviesData = await getMovies(dom);
+      await createDB(moviesData);
+    }
   }
 
   const endTime = Date.now();

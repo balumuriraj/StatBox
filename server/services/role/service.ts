@@ -43,6 +43,21 @@ export async function findRolesByMovieId(movieId: number, category: string) {
   return await generateRolesData(roles);
 }
 
+export async function findRolesCountByCelebId(celebId: number) {
+  const query = [
+    { $match: { celebId } },
+    { $count: "count" }
+  ];
+
+  const results = await RoleModel.aggregate(query);
+  return results;
+}
+
+export async function findRolesByCelebId(celebId: number) {
+  const roles = await RoleModel.find({ celebId });
+  return await generateRolesData(roles);
+}
+
 export async function findRoleById(id: number) {
   const role = await RoleModel.findById(id);
   return await generateRoleData(role);
