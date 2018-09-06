@@ -5,7 +5,7 @@ const $ref = jsonGraph.ref;
 
 async function getRolesByIds(params: any) {
   const { roleIds } = params;
-  const keys = params[2];
+  const keys = params[2] || ["id", "type", "category", "celeb"];
   const results: any[] = [];
 
   for (const roleId of roleIds) {
@@ -192,7 +192,7 @@ async function getMoviesByCelebId(params: any) {
 
 export default [
   {
-    route: "rolesById[{integers:roleIds}]['id','type','category','celeb']",
+    route: "rolesById[{integers:roleIds}]",
     get: getRolesByIds
   },
   {

@@ -7,8 +7,8 @@ import { MovieModel } from "../services/movie/model";
 import { ReviewModel } from "../services/review/model";
 import { RoleModel } from "../services/role/model";
 
-const numYears = 1; //8
-const startYear = 2017;
+const numYears = 6; //8
+const startYear = 2016;
 const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october"];
 const criticsInfo = [
   {

@@ -7,7 +7,7 @@ const $err = jsonGraph.error;
 
 async function getCelebsByIds(params: any) {
   const { celebIds } = params;
-  const keys = params[2];
+  const keys = params[2] || ["id", "name", "photo", "dob"];
   const results: any[] = [];
 
   for (const celebId of celebIds) {
@@ -92,7 +92,7 @@ async function getCelebsByMovieIds(params: any) {
 
 export default [
   {
-    route: "celebsById[{integers:celebIds}]['id','name','photo','dob']",
+    route: "celebsById[{integers:celebIds}]",
     get: getCelebsByIds
   },
   {
