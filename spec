@@ -60,7 +60,7 @@
         $ref("moviesById[24]"),
         ...
       ],
-      notInterested: [
+      seen: [
         $ref("moviesById[3]"),
         $ref("moviesById[4]"),
         ...

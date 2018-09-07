@@ -1,10 +1,12 @@
 import * as bodyParser from "body-parser";
+import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
 import * as falcorExpress from "falcor-express";
 import * as helmet from "helmet";
 import * as http from "http";
-import falcorRouter from "./routes/FalcorRouter";
+import falcorRouter from "./routes/falcorRouter";
+import restRouter from "./routes/restRouter";
 
 // Creates and configures an ExpressJS web server.
 class App {
@@ -21,6 +23,7 @@ class App {
 
   // Configure Express middleware.
   private middleware(): void {
+    this.express.use(cookieParser());
     this.express.use(cors());
     this.express.use(helmet());
     this.express.use(bodyParser.json());
@@ -29,18 +32,7 @@ class App {
 
   // Configure API endpoints.
   private routes(): void {
-    /* This is just to get up and running, and to make sure what we've got is
-     * working so far. This function will change when we start to add more
-     * API endpoints */
-    const router = express.Router();
-    // placeholder route handler
-    router.get("/", (req, res, next) => {
-      res.json({
-        message: "Hello StatBox!"
-      });
-    });
-
-    this.express.use("/", router);
+    this.express.use("/rest/api", restRouter);
 
     const dataSource = falcorExpress.dataSourceRoute((req, res) => falcorRouter);
     this.express.use("/model.json", dataSource);

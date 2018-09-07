@@ -1,15 +1,16 @@
 import { IUser, UserModel } from "./model";
 
-async function generateUserData(User: IUser) {
+function generateUserData(user: IUser) {
   return {
-    id: User._id,
-    authId: User.authId,
-    bookmarks: User.bookmarks
+    id: user._id,
+    authId: user.authId,
+    bookmarks: user.bookmarks,
+    seen: user.seen
   };
 }
 
-export async function createUser(user: IUser) {
-  return await UserModel.create(user);
+export async function findOrCreateUser(authId: string) {
+  return await UserModel.findOneOrUpdate({ authId });
 }
 
 export async function updateUserBookmarks(userId: number, movieId: number) {
@@ -19,10 +20,16 @@ export async function updateUserBookmarks(userId: number, movieId: number) {
 
 export async function findUserByAuthId(authId: string) {
   const users = await UserModel.find({ authId });
-  return await generateUserData(users[0]);
+  console.log(users);
+
+  if (!users || !users[0]) {
+    return;
+  }
+
+  return generateUserData(users[0]);
 }
 
 export async function findUserById(id: number) {
   const user = await UserModel.findById(id);
-  return await generateUserData(user);
+  return generateUserData(user);
 }

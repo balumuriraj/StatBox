@@ -49,7 +49,15 @@ var model = new falcor.Model({cache: {
     "date1=1536256623456&date2=1538848623456": [
       {$type: "ref", value: ["moviesById", 15]}
     ]
-  }
+  },
+  usersById: {
+    34: {
+      authId: "user1"
+    },
+    35: {
+      authId: "user2"
+    }
+  },
 }});
 
 var baseUrl = "http://localhost:4000";
@@ -71,8 +79,8 @@ var model1 = new falcor.Model({
 // console.log(JSON.stringify(await model.get(["moviesSearches", ["date1=1533663509551&date2=1536255509551", "date1=1536256623456&date2=1538848623456"], [0,1], ["title", "cast"], [0,1], ["category", "celeb"], ["name", "photo"]]), null, 2));
 // console.log(JSON.stringify(await model1.get(["moviesSearches", ["date1=1533663509551&date2=1536255509551", "date1=1536256623456&date2=1538848623456"], [0,1], ["title", "cast"], [0,1], ["category", "celeb"], ["name", "photo"]]), null, 2));
 
-console.log(JSON.stringify(await model.get(["moviesById", 12, ["title"]]), null, 2));
-console.log(JSON.stringify(await model1.get(["moviesById", 12, ["title"]]), null, 2));
+console.log(JSON.stringify(await model.get(["usersById", 34, ["authId"]]), null, 2));
+console.log(JSON.stringify(await model1.get(["usersById", 34, ["authId"]]), null, 2));
 }
 
 init();

@@ -5,16 +5,21 @@ import { findUserByAuthId, findUserById } from "../../services/user/service";
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
 
-async function getUsersByIds(params: any) {
+async function getUsersById(params: any) {
+  console.log("getUsersById", params);
   const { userIds } = params;
-  const keys = params[2];
+  const keys = params[2] || ["id", "authId", "bookmarks", "seen"];
   const results: any[] = [];
 
   for (const userId of userIds) {
     const user = await findUserById(userId);
 
     for (const key of keys) {
-      const value = user[key];
+      let value = user[key];
+
+      if (key === "bookmarks" || key === "seen") {
+        value = $atom(value);
+      }
 
       results.push({
         path: ["usersById", userId, key],
@@ -26,39 +31,9 @@ async function getUsersByIds(params: any) {
   return results;
 }
 
-async function getUsersByAuthIds(params: any) {
-  const { authIds } = params;
-  const keys = params[2];
-  const results: any[] = [];
-
-  for (const authId of authIds) {
-    const user = await findUserByAuthId(authId);
-
-    for (const key of keys) {
-      let value = user[key];
-
-      if (key === "bookmarks" || key === "notInterested") {
-        const movies = value.map((movieId) => $ref(["moviesById", movieId]));
-        value = $atom(movies);
-      }
-
-      results.push({
-        path: ["usersById", authId, key],
-        value: value || null
-      });
-    }
-  }
-
-  return results;
-}
-
 export default [
   {
-    route: "usersById[{integers:userIds}]['bookmarks','notInterested']",
-    get: getUsersByIds
-  },
-  {
-    route: "usersByAuthId[{authIds}]['id','bookmarks','notInterested']",
-    get: getUsersByAuthIds
+    route: "usersById[{integers:userIds}]",
+    get: getUsersById
   }
 ];

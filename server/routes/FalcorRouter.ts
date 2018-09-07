@@ -4,7 +4,7 @@ import criticRoutes from "./critic/routes";
 import movieRoutes from "./movie/routes";
 import reviewRoutes from "./review/routes";
 import roleRoutes from "./role/routes";
-
+import userRoutes from "./user/routes";
 
 /*
 {
@@ -62,7 +62,8 @@ const FalcorRouter = Router.createClass([
   ...reviewRoutes,
   ...celebRoutes,
   ...roleRoutes,
-  ...criticRoutes
+  ...criticRoutes,
+  ...userRoutes
 ]);
 
 export default new FalcorRouter();

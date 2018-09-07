@@ -4,13 +4,13 @@ import { autoIncrement, mongoose } from "../../config/database";
 export interface IUser extends Document {
   authId: string;
   bookmarks: [number];
-  notInterested: [number];
+  seen: [number];
 }
 
 const userSchema = new Schema({
-  authId: String,
+  authId: { type: String, unique : true },
   bookmarks: [Number],
-  notInterested: [Number]
+  seen: [Number]
 });
 
 userSchema.plugin(autoIncrement.plugin, { model: "User", startAt: 1 });
@@ -79,6 +79,35 @@ export class UserModel {
         }
 
         resolve(result);
+      });
+    });
+  }
+
+  static findOneOrUpdate(query: any): Promise<any> {
+    return new Promise<any[]>((resolve, reject) => {
+      User.find(query, (err: any, result: IUser[]) => {
+        if (err) {
+          reject(err);
+        }
+
+        if (result[0]) {
+          resolve(result[0]._id);
+        } else {
+          const model = new User({
+            authId: query.authId,
+            watchlist: [],
+            seen: []
+          });
+          model.save((err: any, result: IUser) => {
+            if (err) {
+              reject(err);
+            }
+
+            console.log("save resilt", result);
+
+            resolve(result && result._id);
+          });
+        }
       });
     });
   }
