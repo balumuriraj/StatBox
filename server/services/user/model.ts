@@ -37,7 +37,7 @@ export class UserModel {
 
   static update(id: number, update: any): Promise<IUser> {
     return new Promise<IUser>((resolve, reject) => {
-      User.findByIdAndUpdate(id, update, (err: any, result: IUser) => {
+      User.findByIdAndUpdate(id, update, {new: true}, (err: any, result: IUser) => {
         if (err) {
           reject(err);
         }
@@ -102,8 +102,6 @@ export class UserModel {
             if (err) {
               reject(err);
             }
-
-            console.log("save resilt", result);
 
             resolve(result && result._id);
           });

@@ -2,22 +2,48 @@ import { Document, Model, Schema } from "mongoose";
 import { autoIncrement, mongoose } from "../../config/database";
 
 export interface IReview extends Document {
-  critic: string;
+  userId: number;
   movieId: number;
-  url: string;
   rating: number;
+  watchWith: "friends" | "self" | "family";
+  pace: "slow" | "fast";
+  theme: "light" | "dark";
+  plot: "simple" | "complex";
 }
 
 const reviewSchema = new Schema({
-  critic: String,
+  userId: Number,
   movieId: Number,
-  url: String,
-  rating: Number
+  rating: Number,
+  watchWith: String,
+  pace: String,
+  theme: String,
+  plot: String
 });
 
 reviewSchema.plugin(autoIncrement.plugin, { model: "Review", startAt: 1 });
 
 const Review = mongoose.model<IReview>("Review", reviewSchema, "Reviews");
+
+Review.schema.path("rating").validate((value) => {
+  return value === null || value > 0 || value <= 5;
+}, "Invalid rating value");
+
+Review.schema.path("watchWith").validate((value) => {
+  return /friends|self|family/i.test(value);
+}, "Invalid watchWith value");
+
+Review.schema.path("pace").validate((value) => {
+  return /slow|fast/i.test(value);
+}, "Invalid pace value");
+
+Review.schema.path("theme").validate((value) => {
+  return /light|dark/i.test(value);
+}, "Invalid pace value");
+
+Review.schema.path("plot").validate((value) => {
+  return /simple|complex/i.test(value);
+}, "Invalid plot value");
 
 export class ReviewModel {
   constructor() {}
@@ -36,14 +62,43 @@ export class ReviewModel {
     });
   }
 
-  static update(id: number, update: any): Promise<IReview> {
+  static update(query: any, update: any): Promise<IReview> {
+    const options =  {upsert: true, new: true, runValidators: true };
+
     return new Promise<IReview>((resolve, reject) => {
-      Review.findByIdAndUpdate(id, update, (err: any, result: IReview) => {
+      // Review.findOneAndUpdate(query, update, options, (err: any, result: IReview) => {
+      //   console.log(err, result);
+
+      //   if (err) {
+      //     reject(err);
+      //   }
+
+      //   resolve(result);
+      // });
+
+      Review.findOne(query, (err: any, result: IReview) => {
         if (err) {
           reject(err);
         }
 
-        resolve(result);
+        if (result) {
+          Review.findByIdAndUpdate(result._id, update, (err: any, result: IReview) => {
+            if (err) {
+              reject(err);
+            }
+
+            resolve(result);
+          });
+        } else {
+          const model = new Review(update);
+          model.save((err: any, result: IReview) => {
+            if (err) {
+              reject(err);
+            }
+
+            resolve(result);
+          });
+        }
       });
     });
   }
@@ -54,7 +109,6 @@ export class ReviewModel {
         if (err) {
           reject(err);
         }
-
         resolve(result);
       });
     });

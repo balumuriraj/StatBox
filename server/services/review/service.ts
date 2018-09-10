@@ -14,10 +14,12 @@ async function generateReviewsData(reviews: IReview[]) {
 async function generateReviewData(review: IReview) {
   return {
     id: review._id,
-    url: review.url,
     rating: review.rating,
     movieId: review.movieId,
-    critic: review.critic
+    watchWith: review.watchWith,
+    pace: review.pace,
+    theme: review.theme,
+    plot: review.plot
   };
 }
 
@@ -26,9 +28,25 @@ export async function findReviewById(id: number) {
   return await generateReviewData(review);
 }
 
+export async function findReview(query: any) {
+  const reviews = await ReviewModel.find(query);
+  return reviews[0] && await generateReviewData(reviews[0]);
+}
+
 export async function findReviewsByMovieId(movieId: number) {
   const reviews = await ReviewModel.find({ movieId });
   return await generateReviewsData(reviews);
+}
+
+export async function findReviewsByUserId(userId: number) {
+  const reviews = await ReviewModel.find({ userId });
+  return await generateReviewsData(reviews);
+}
+
+export async function addOrUpdateReview(review: any) {
+  const query = { userId: review.userId, movieId: review.movieId };
+  const result = await ReviewModel.update(query, review);
+  return await generateReviewData(result);
 }
 
 export async function findReviewsCountByMovieId(movieId: number) {
@@ -44,5 +62,21 @@ export async function findReviewsCountByMovieId(movieId: number) {
   ];
 
   const results = await ReviewModel.aggregate(query);
-  return results;
+  return results[0] && results[0].count || 0;
+}
+
+export async function findReviewsCountByUserId(userId: number) {
+  const where: any = userId && { userId };
+  const group: any = {
+    _id: { userId: "$userId" },
+    count: { $sum: 1 }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  return results[0] && results[0].count || 0;
 }

@@ -62,7 +62,7 @@ var model = new falcor.Model({cache: {
 
 var baseUrl = "http://localhost:4000";
 var model1 = new falcor.Model({
-  source: new falcor.HttpDataSource(baseUrl + "/model.json", {
+  source: new falcor.HttpDataSource(baseUrl + "/api/model.json", {
     // Options here
     // headers: {
     //     // Any headers here

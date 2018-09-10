@@ -13,14 +13,28 @@ export async function findOrCreateUser(authId: string) {
   return await UserModel.findOneOrUpdate({ authId });
 }
 
-export async function updateUserBookmarks(userId: number, movieId: number) {
+export async function addUserBookmarks(userId: number, movieId: number) {
   const user = await UserModel.update(userId, { $push: { bookmarks: movieId } });
+  return await generateUserData(user);
+}
+
+export async function removeUserBookmarks(userId: number, movieId: number) {
+  const user = await UserModel.update(userId, { $pull: { bookmarks: movieId } });
+  return await generateUserData(user);
+}
+
+export async function addUserSeen(userId: number, movieId: number) {
+  const user = await UserModel.update(userId, { $push: { seen: movieId } });
+  return await generateUserData(user);
+}
+
+export async function removeUserSeen(userId: number, movieId: number) {
+  const user = await UserModel.update(userId, { $pull: { seen: movieId } });
   return await generateUserData(user);
 }
 
 export async function findUserByAuthId(authId: string) {
   const users = await UserModel.find({ authId });
-  console.log(users);
 
   if (!users || !users[0]) {
     return;

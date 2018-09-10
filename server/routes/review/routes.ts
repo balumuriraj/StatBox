@@ -1,76 +1,27 @@
 import * as jsonGraph from "falcor-json-graph";
-import { findReviewById, findReviewsByMovieId, findReviewsCountByMovieId } from "../../services/review/service";
+import { addOrUpdateReview, findReviewById, findReviewsByUserId, findReviewsCountByUserId } from "../../services/review/service";
 
 const $ref = jsonGraph.ref;
+const $atom = jsonGraph.atom;
 
-async function getReviewsByIds(params: any) {
+async function getReviewsById(params: any) {
   const { reviewIds } = params;
-  const keys = params[2];
+  const keys = params[2] || ["id", "movie", "rating", "watchWith", "pace", "theme", "plot"];
   const results: any[] = [];
 
   for (const reviewId of reviewIds) {
     const review = await findReviewById(reviewId);
 
     for (const key of keys) {
-      const value = review[key];
-
-      results.push({
-        path: ["reviewsById", reviewId, key],
-        value: value || null
-      });
-    }
-  }
-
-  return results;
-}
-
-async function getReviewsCountByMovieIds(params: any) {
-  const { movieIds } = params;
-  const results: any[] = [];
-
-  for (const movieId of movieIds) {
-    const rows = await findReviewsCountByMovieId(movieId);
-    let value = rows && rows[0] && rows[0].count;
-
-    if (value == null) {
-      value = null;
-    }
-
-    results.push({
-      path: ["reviewsByMovieId", movieId, "reviews", "length"],
-      value
-    });
-  }
-
-  return results;
-}
-
-async function getReviewsByMovieIds(params: any) {
-  const { movieIds, reviewIndices } = params;
-  const results: any[] = [];
-
-  for (const movieId of movieIds) {
-    const reviews = await findReviewsByMovieId(movieId);
-
-    if (!reviews.length) {
-      results.push({
-        path: ["reviewsByMovieId", movieId],
-        value: null
-      });
-    }
-    else {
-      for (const reviewIndex of reviewIndices) {
-        let value: any = null;
-        const review = reviews[reviewIndex];
-        const reviewId = review && review.id;
-
-        if (movieId) {
-          value = $ref(["reviewsById", reviewId]);
-        }
-
+      if (key === "movie") {
         results.push({
-          path: ["reviewsByMovieId", movieId, "reviews", reviewIndex],
-          value
+          path: ["reviewsById", reviewId, key],
+          value: $ref(["moviesById", review.movieId])
+        });
+      } else {
+        results.push({
+          path: ["reviewsById", reviewId, key],
+          value: review[key] || null
         });
       }
     }
@@ -79,17 +30,60 @@ async function getReviewsByMovieIds(params: any) {
   return results;
 }
 
+async function updateReview(callPath: any, args: any) {
+  const userId = callPath["userIds"][0];
+
+  console.log(userId, this.userId);
+  if (this.userId == null || this.userId !== Number(userId)) {
+    throw new Error("not authorized");
+  }
+
+  const review = args[0];
+  const reviewsLengthBefore = await findReviewsCountByUserId(userId);
+  const result = await addOrUpdateReview(review);
+  const reviews = await findReviewsByUserId(userId);
+  const reviewsLength = reviews.length;
+  const isAdd = reviewsLength - reviewsLengthBefore === 1;
+  const results: any[] = [];
+
+  if (isAdd) {
+    results.push({
+      path: ["usersById", userId, "reviews", reviewsLength - 1],
+      value: $ref(["reviewsById", result.id])
+    }, {
+      path: ["usersById", userId, "reviews", "lastUpdatedIndex"],
+      value: reviewsLength - 1
+    });
+  } else {
+    const index = reviews.map((review) => review.id).indexOf(result.id);
+
+    results.push({
+      path: ["usersById", userId, "reviews", index],
+      value: $ref(["reviewsById", result.id])
+    }, {
+      path: ["usersById", userId, "reviews", "lastUpdatedIndex"],
+      value: index
+    });
+  }
+
+  results.push({
+    path: ["usersById", userId, "reviews", {to: reviewsLength}],
+    invalidated: true
+  }, {
+    path: ["usersById", userId, "reviews", "length"],
+    value: reviewsLength
+  });
+
+  return results;
+}
+
 export default [
   {
-    route: "reviewsById[{integers:reviewIds}]['url','rating','critic']",
-    get: getReviewsByIds
+    route: "reviewsById[{integers:reviewIds}]",
+    get: getReviewsById
   },
   {
-    route: "reviewsByMovieId[{integers:movieIds}].reviews.length",
-    get: getReviewsCountByMovieIds
-  },
-  {
-    route: "reviewsByMovieId[{integers:movieIds}].reviews[{integers:reviewIndices}]",
-    get: getReviewsByMovieIds
+    route: "usersById[{integers:userIds}].updateReview",
+    call: updateReview
   }
 ];

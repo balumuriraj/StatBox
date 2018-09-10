@@ -2,9 +2,9 @@ import * as md5 from "js-md5";
 import { JSDOM } from "jsdom";
 import { CelebModel } from "../services/celeb/model";
 import { CriticModel } from "../services/critic/model";
+import { CriticReviewModel } from "../services/criticReview/model";
 import { GenreModel } from "../services/genre/model";
 import { MovieModel } from "../services/movie/model";
-import { ReviewModel } from "../services/review/model";
 import { RoleModel } from "../services/role/model";
 
 const numYears = 6; //8
@@ -341,13 +341,13 @@ async function createReview(reviewData: IReview, movieId: number) {
     return;
   }
 
-  const findResult = await ReviewModel.find({ critic: criticInfo.name, movieId });
+  const findResult = await CriticReviewModel.find({ critic: criticInfo.name, movieId });
 
   if (findResult.length) {
     return;
   }
 
-  const reviewId = await ReviewModel.create({
+  const reviewId = await CriticReviewModel.create({
     critic: criticInfo.name,
     url: reviewData.url,
     movieId,

@@ -1,10 +1,12 @@
 import * as Router from "falcor-router";
 import celebRoutes from "./celeb/routes";
 import criticRoutes from "./critic/routes";
+import criticReviewRoutes from "./criticReview/routes";
 import movieRoutes from "./movie/routes";
 import reviewRoutes from "./review/routes";
 import roleRoutes from "./role/routes";
 import userRoutes from "./user/routes";
+
 
 /*
 {
@@ -14,7 +16,7 @@ import userRoutes from "./user/routes";
       year: 2017,
       poster: "url",
       runtime: 150,
-      reviews: 3
+      criticReviews: 3
     },
     // more
   },
@@ -39,17 +41,17 @@ import userRoutes from "./user/routes";
     },
     // more
   },
-  reviewsById: {
+  criticReviewsById: {
     5: {
       url: "url",
       rating: 3
     },
     // more
   },
-  reviewsByMovieId: {
+  criticReviewsByMovieId: {
     234: {
-      reviews: [
-        { $type: "ref", value: ["reviewsById", 5] },
+      criticReviews: [
+        { $type: "ref", value: ["criticReviewsById", 5] },
         // more
       ]
     }
@@ -57,13 +59,23 @@ import userRoutes from "./user/routes";
 }
 */
 
-const FalcorRouter = Router.createClass([
+const BaseRouter = Router.createClass([
   ...movieRoutes,
-  ...reviewRoutes,
+  ...criticReviewRoutes,
   ...celebRoutes,
   ...roleRoutes,
   ...criticRoutes,
-  ...userRoutes
+  ...userRoutes,
+  ...reviewRoutes
 ]);
 
-export default new FalcorRouter();
+class FalcorRouter extends BaseRouter {
+  public userId: number;
+
+  constructor(userId: number) {
+    super();
+    this.userId = userId;
+  }
+}
+
+export default FalcorRouter;

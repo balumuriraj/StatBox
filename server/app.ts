@@ -5,8 +5,9 @@ import * as express from "express";
 import * as falcorExpress from "falcor-express";
 import * as helmet from "helmet";
 import * as http from "http";
-import falcorRouter from "./routes/falcorRouter";
+import FalcorRouter from "./routes/falcorRouter";
 import restRouter from "./routes/restRouter";
+import tokenRouter from "./routes/tokenRouter";
 
 // Creates and configures an ExpressJS web server.
 class App {
@@ -32,10 +33,11 @@ class App {
 
   // Configure API endpoints.
   private routes(): void {
-    this.express.use("/rest/api", restRouter);
+    this.express.use("/api", tokenRouter);
+    this.express.use("/api/rest", restRouter);
 
-    const dataSource = falcorExpress.dataSourceRoute((req, res) => falcorRouter);
-    this.express.use("/model.json", dataSource);
+    const dataSource = falcorExpress.dataSourceRoute((req, res) => new FalcorRouter(req.body.userId));
+    this.express.use("/api/model.json", dataSource);
   }
 
 }

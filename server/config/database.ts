@@ -1,5 +1,6 @@
 import * as mongoose from "mongoose";
 import * as autoIncrement from "mongoose-auto-increment";
+// import * as autoIncrement from "./autoincrement";
 
 mongoose.connect("mongodb://localhost/statboxDB", { useNewUrlParser: true } as any);
 mongoose.set("useCreateIndex", true); // to remove deprecation errors
