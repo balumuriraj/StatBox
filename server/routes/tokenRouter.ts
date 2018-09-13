@@ -14,6 +14,7 @@ async function verifyToken(idToken: string) {
     return decodedToken.uid;
   } catch (err) {
     // Handle error
+    throw err;
   }
 }
 

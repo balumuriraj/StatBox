@@ -13,7 +13,7 @@ const $atom = jsonGraph.atom;
 
 async function getUsersById(params: any) {
   const { userIds } = params;
-  const keys = params[2] || ["id", "authId", "bookmarks", "seen", "reviewed"];
+  const keys = params[2] || ["id", "authId", "bookmarks", "seen"];
   const results: any[] = [];
 
   for (const userId of userIds) {
@@ -21,23 +21,24 @@ async function getUsersById(params: any) {
 
     for (const key of keys) {
       if (key === "bookmarks" || key === "seen" || key === "reviewed") {
-        let movieIds = user[key];
-
-        if (key === "reviewed") {
-          const reviews = await findReviewsByUserId(userId);
-          movieIds = reviews.map((review) => review.movieId);
-        }
+        const movieIds = user[key];
 
         if (movieIds.length) {
           movieIds.forEach((movieId, index) => {
+            const value = $ref(["moviesById", movieId]);
+            value.$expires = -1000; // expires a second later
             results.push({
               path: ["usersById", userId, key, index],
-              value: movieId ? $ref(["moviesById", movieId]) : null
+              value
             });
           });
+
+          const value = $atom(movieIds.length);
+          value.$expires = 0; // expire immediately
+
           results.push({
             path: ["usersById", userId, key, "length"],
-            value: movieIds.length
+            value
           });
         } else {
           results.push({
@@ -52,6 +53,35 @@ async function getUsersById(params: any) {
         });
       }
     }
+  }
+
+  return results;
+}
+
+async function getUserReviewsById(params: any) {
+  const { userIds } = params;
+  console.log("params", params);
+  const results: any[] = [];
+
+  for (const userId of userIds) {
+    const reviews = await findReviewsByUserId(userId);
+
+    reviews.forEach((review, index) => {
+      const value = $ref(["reviewsById", review.id]);
+      value.$expires = -1000; // expires a second later
+      results.push({
+        path: ["usersById", userId, "reviews", index],
+        value
+      });
+    });
+
+    const value = $atom(reviews.length);
+    value.$expires = 0; // expire immediately
+
+    results.push({
+      path: ["usersById", userId, "reviews", "length"],
+      value
+    });
   }
 
   return results;
@@ -94,7 +124,7 @@ async function removeBookmark(callPath: any, args: any) {
 
   return [
     {
-      path: ["usersById", userId, "bookmarks", {from: index, to: bookmarksLength }],
+      path: ["usersById", userId, "bookmarks", { from: index, to: bookmarksLength }],
       invalidated: true
     },
     {
@@ -141,7 +171,7 @@ async function removeSeen(callPath: any, args: any) {
 
   return [
     {
-      path: ["usersById", userId, "seen", {from: index, to: seenLength }],
+      path: ["usersById", userId, "seen", { from: index, to: seenLength }],
       invalidated: true
     },
     {
@@ -155,6 +185,10 @@ export default [
   {
     route: "usersById[{integers:userIds}]",
     get: getUsersById
+  },
+  {
+    route: "usersById[{integers:userIds}].reviews",
+    get: getUserReviewsById
   },
   {
     route: "usersById[{integers:userIds}].addBookmark",
