@@ -2,6 +2,7 @@ import * as Router from "falcor-router";
 import celebRoutes from "./celeb/routes";
 import criticRoutes from "./critic/routes";
 import criticReviewRoutes from "./criticReview/routes";
+import genreRoutes from "./genre/routes";
 import movieRoutes from "./movie/routes";
 import reviewRoutes from "./review/routes";
 import roleRoutes from "./role/routes";
@@ -65,6 +66,7 @@ const BaseRouter = Router.createClass([
   ...celebRoutes,
   ...roleRoutes,
   ...criticRoutes,
+  ...genreRoutes,
   ...userRoutes,
   ...reviewRoutes
 ]);

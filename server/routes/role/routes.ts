@@ -149,7 +149,7 @@ async function getMoviesCountByCelebId(params: any) {
     }
 
     results.push({
-      path: ["moviesByCastId", celebId, "movies", "length"],
+      path: ["moviesByCelebId", celebId, "movies", "length"],
       value
     });
   }
