@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "create": "node ./dist/server/scripts/createDB.js",
-    "start": "nodemon",
+    "start": "node ./dist/server/app.js",
+    "start:dev": "nodemon",
     "tsc": "tsc",
     "tsc:w": "tsc -w",
     "lint": "tslint server/**/*.ts --fix",
-    "build": "tsc -p ./prod.tsconfig.json && ncp './server/assets' './dist/assets'"
+    "build": "tsc -p ./prod.tsconfig.json && ncp './server/config' './dist/server/config'",
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -49,10 +51,14 @@
     "@types/mongoose": "^5.0.15",
     "@types/mongoose-auto-increment": "^5.0.30",
     "@types/node": "^9.6.20",
+    "ncp": "^2.0.0",
     "node-sass": "^4.7.2",
     "nodemon": "^1.17.5",
     "ts-node": "^5.0.1",
     "tslint": "^5.10.0",
     "typescript": "^2.9.1"
+  },
+  "engines": {
+    "node": "10.x"
   }
 }
