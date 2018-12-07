@@ -20,17 +20,8 @@ async function generateCelebData(celeb: ICeleb) {
   };
 }
 
-export async function findCelebById(id: number) {
-  const celeb = await CelebModel.findById(id);
-  return await generateCelebData(celeb);
-}
-
-export async function findCelebsByMovieId(movieId: number) {
-  const celebs = await CelebModel.find({ movieIds: { $all: movieId } });
+export async function findCelebsByIds(ids: number[]) {
+  const query = { _id: { $in: ids } };
+  const celebs = await CelebModel.find(query);
   return await generateCelebsData(celebs);
-}
-
-export async function findCelebsCountByMovieId(movieId: number) {
-  const celebs = await CelebModel.find({ movieIds: { $all: movieId } });
-  return celebs.length;
 }

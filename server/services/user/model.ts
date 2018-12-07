@@ -4,16 +4,17 @@ import { autoIncrement, mongoose } from "../../config/database";
 export interface IUser extends Document {
   authId: string;
   bookmarks: [number];
-  seen: [number];
+  favorites: [number];
 }
 
 const userSchema = new Schema({
   authId: { type: String, unique : true },
   bookmarks: [Number],
-  seen: [Number]
+  favorites: [Number]
 });
 
 userSchema.plugin(autoIncrement.plugin, { model: "User", startAt: 1 });
+userSchema.index({authId: 1}, {unique: true});
 
 const User = mongoose.model<IUser>("User", userSchema, "Users");
 
@@ -95,8 +96,8 @@ export class UserModel {
         } else {
           const model = new User({
             authId: query.authId,
-            watchlist: [],
-            seen: []
+            bookmarks: [],
+            favorites: []
           });
           model.save((err: any, result: IUser) => {
             if (err) {

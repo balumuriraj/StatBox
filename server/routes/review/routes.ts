@@ -1,5 +1,5 @@
 import * as jsonGraph from "falcor-json-graph";
-import { addOrUpdateReview, findReviewById, findReviewsByUserId, findReviewsCountByUserId } from "../../services/review/service";
+import { addOrUpdateReview, findReviewsByIds, findReviewsByUserId, findReviewsCountByUserId } from "../../services/review/service";
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
@@ -9,23 +9,23 @@ async function getReviewsById(params: any) {
   const keys = params[2] || ["id", "movie", "rating", "watchWith", "pace", "theme", "plot"];
   const results: any[] = [];
 
-  for (const reviewId of reviewIds) {
-    const review = await findReviewById(reviewId);
+  const reviews = await findReviewsByIds(reviewIds);
 
+  reviews.forEach((review) => {
     for (const key of keys) {
       if (key === "movie") {
         results.push({
-          path: ["reviewsById", reviewId, key],
+          path: ["reviewsById", review.id, key],
           value: $ref(["moviesById", review.movieId])
         });
       } else {
         results.push({
-          path: ["reviewsById", reviewId, key],
+          path: ["reviewsById", review.id, key],
           value: review[key] || null
         });
       }
     }
-  }
+  });
 
   return results;
 }

@@ -37,11 +37,11 @@ export class MovieModel {
 
     return new Promise<number>((resolve, reject) => {
       model.save((err: any, result: IMovie) => {
-        if (err) {
+        if (err || !result) {
           reject(err);
         }
 
-        resolve(result._id);
+        resolve(result && result._id);
       });
     });
   }

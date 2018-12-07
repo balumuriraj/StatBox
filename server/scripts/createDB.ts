@@ -7,9 +7,10 @@ import { GenreModel } from "../services/genre/model";
 import { MovieModel } from "../services/movie/model";
 import { RoleModel } from "../services/role/model";
 
-const numYears = 6; //8
-const startYear = 2016;
-const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october"];
+const numYears = 7; //8
+const startYear = 2017;
+// const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const months = ["november", "december"];
 const criticsInfo = [
   {
     name: "filmibeat",
@@ -208,7 +209,7 @@ async function updateMovie(movie: IMovie) {
   // Review
   const reviewUrl = url.split(".html")[0] + "/review.html";
   const reviewDOM: any = await performScrapeRequest(reviewUrl);
-  const noReview = reviewDOM.getElementsByClassName("no-critics")[0];
+  const noReview = reviewDOM && reviewDOM.getElementsByClassName("no-critics")[0];
   const reviews: any[] = [];
   if (!noReview) {
     const reviewList = reviewDOM.getElementsByClassName("popcorn-criticsReview");

@@ -60,7 +60,7 @@
         $ref("moviesById[24]"),
         ...
       ],
-      seen: [
+      favorites: [
         $ref("moviesById[3]"),
         $ref("moviesById[4]"),
         ...

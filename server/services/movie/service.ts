@@ -25,9 +25,10 @@ async function generateMovieData(movie: IMovie) {
   };
 }
 
-export async function findMovieById(id: number) {
-  const movie = await MovieModel.findById(id);
-  return await generateMovieData(movie);
+export async function findMoviesByIds(ids: number[]) {
+  const query = { _id: { $in: ids } };
+  const movies = await MovieModel.find(query);
+  return await generateMoviesData(movies);
 }
 
 export async function findMoviesCountByDate(year: number, month?: number, day?: number) {

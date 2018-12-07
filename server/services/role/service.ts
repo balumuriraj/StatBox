@@ -22,43 +22,20 @@ async function generateRolesData(roles: IRole[]) {
   return result;
 }
 
-export async function findRolesCountByMovieId(movieId: number, category: string) {
-  const where: any = { movieId, category };
-  const group: any = {
-    _id: { movieId: "$movieId" },
-    count: { $sum: 1 }
-  };
-
-  const query = [
-    { $match: where },
-    { $group: group }
-  ];
-
-  const results = await RoleModel.aggregate(query);
-  return results;
-}
-
-export async function findRolesByMovieId(movieId: number, category: string) {
-  const roles = await RoleModel.find({ movieId, category });
+export async function findRolesByMovieIds(movieIds: number[], category: string) {
+  const query = { movieId: { $in: movieIds }, category };
+  const roles = await RoleModel.find(query);
   return await generateRolesData(roles);
 }
 
-export async function findRolesCountByCelebId(celebId: number) {
-  const query = [
-    { $match: { celebId } },
-    { $count: "count" }
-  ];
-
-  const results = await RoleModel.aggregate(query);
-  return results;
-}
-
-export async function findRolesByCelebId(celebId: number) {
-  const roles = await RoleModel.find({ celebId });
+export async function findRolesByCelebIds(celebIds: number[]) {
+  const query = { celebId: { $in: celebIds } };
+  const roles = await RoleModel.find(query);
   return await generateRolesData(roles);
 }
 
-export async function findRoleById(id: number) {
-  const role = await RoleModel.findById(id);
-  return await generateRoleData(role);
+export async function findRolesByIds(ids: number[]) {
+  const query = { _id: { $in: ids } };
+  const roles = await RoleModel.find(query);
+  return await generateRolesData(roles);
 }

@@ -22,6 +22,9 @@ const reviewSchema = new Schema({
 });
 
 reviewSchema.plugin(autoIncrement.plugin, { model: "Review", startAt: 1 });
+reviewSchema.index({userId: 1}, {unique: false});
+reviewSchema.index({movieId: 1}, {unique: false});
+reviewSchema.index({movieId: 1, userId: 1}, {unique: true});
 
 const Review = mongoose.model<IReview>("Review", reviewSchema, "Reviews");
 

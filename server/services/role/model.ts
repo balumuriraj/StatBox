@@ -18,6 +18,9 @@ const roleSchema = new Schema({
 });
 
 roleSchema.plugin(autoIncrement.plugin, { model: "Role", startAt: 1 });
+roleSchema.index({movieId: 1, category: 1}, {unique: false});
+roleSchema.index({celebId: 1}, {unique: false});
+roleSchema.index({movieId: 1}, {unique: false});
 
 const Role = mongoose.model<IRole>("Role", roleSchema, "Roles");
 

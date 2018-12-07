@@ -14,6 +14,7 @@ async function generateReviewsData(reviews: IReview[]) {
 async function generateReviewData(review: IReview) {
   return {
     id: review._id,
+    userId: review.userId,
     rating: review.rating,
     movieId: review.movieId,
     watchWith: review.watchWith,
@@ -23,14 +24,16 @@ async function generateReviewData(review: IReview) {
   };
 }
 
-export async function findReviewById(id: number) {
-  const review = await ReviewModel.findById(id);
-  return await generateReviewData(review);
+export async function findReviewsByIds(ids: number[]) {
+  const query = { _id: { $in: ids } };
+  const reviews = await ReviewModel.find(query);
+  return await generateReviewsData(reviews);
 }
 
-export async function findReview(query: any) {
+export async function findUserReviewsByMovieIds(userId: number, movieIds: number[]) {
+  const query = { movieId: { $in: movieIds }, userId };
   const reviews = await ReviewModel.find(query);
-  return reviews[0] && await generateReviewData(reviews[0]);
+  return await generateReviewsData(reviews);
 }
 
 export async function findReviewsByMovieId(movieId: number) {
@@ -38,8 +41,20 @@ export async function findReviewsByMovieId(movieId: number) {
   return await generateReviewsData(reviews);
 }
 
+export async function findReviewsByMovieIds(movieIds: number[]) {
+  const query = { movieId: { $in: movieIds } };
+  const reviews = await ReviewModel.find(query);
+  return await generateReviewsData(reviews);
+}
+
 export async function findReviewsByUserId(userId: number) {
   const reviews = await ReviewModel.find({ userId });
+  return await generateReviewsData(reviews);
+}
+
+export async function findReviewsByUserIds(userIds: number[]) {
+  const query = { userId: { $in: userIds } };
+  const reviews = await ReviewModel.find(query);
   return await generateReviewsData(reviews);
 }
 

@@ -1,11 +1,11 @@
 import * as jsonGraph from "falcor-json-graph";
-import { findReviewsByUserId } from "../../services/review/service";
+import { findReviewsByUserIds } from "../../services/review/service";
 import {
-  addUserBookmarks,
-  addUserSeen,
-  findUserById,
-  removeUserBookmarks,
-  removeUserSeen
+  addUserBookmark,
+  addUserFavorite,
+  findUsersByIds,
+  removeUserBookmark,
+  removeUserFavorite
 } from "../../services/user/service";
 
 const $ref = jsonGraph.ref;
@@ -13,14 +13,16 @@ const $atom = jsonGraph.atom;
 
 async function getUsersById(params: any) {
   const { userIds } = params;
-  const keys = params[2] || ["id", "authId", "bookmarks", "seen"];
+  const keys = params[2] || ["id", "authId", "bookmarks", "favorites"];
   const results: any[] = [];
 
-  for (const userId of userIds) {
-    const user = await findUserById(userId);
+  const users = await findUsersByIds(userIds);
+
+  users.forEach((user) => {
+    const userId = user.id;
 
     for (const key of keys) {
-      if (key === "bookmarks" || key === "seen" || key === "reviewed") {
+      if (key === "bookmarks" || key === "favorites" || key === "reviewed") {
         const movieIds = user[key];
 
         if (movieIds.length) {
@@ -53,7 +55,7 @@ async function getUsersById(params: any) {
         });
       }
     }
-  }
+  });
 
   return results;
 }
@@ -63,8 +65,10 @@ async function getUserReviewsById(params: any) {
   console.log("params", params);
   const results: any[] = [];
 
+  const reviewsByUserIds = await findReviewsByUserIds(userIds);
+
   for (const userId of userIds) {
-    const reviews = await findReviewsByUserId(userId);
+    const reviews = reviewsByUserIds.filter((review) => review.userId === userId);
 
     reviews.forEach((review, index) => {
       const value = $ref(["reviewsById", review.id]);
@@ -95,7 +99,7 @@ async function addBookmark(callPath: any, args: any) {
   }
 
   const movieId = args[0];
-  const user = await addUserBookmarks(userId, movieId);
+  const user = await addUserBookmark(userId, movieId);
   const bookmarksLength = user.bookmarks.length;
 
   return [
@@ -118,7 +122,7 @@ async function removeBookmark(callPath: any, args: any) {
   }
 
   const movieId = args[0];
-  const user = await removeUserBookmarks(userId, movieId);
+  const user = await removeUserBookmark(userId, movieId);
   const index = user.bookmarks.indexOf(movieId);
   const bookmarksLength = user.bookmarks.length;
 
@@ -134,7 +138,7 @@ async function removeBookmark(callPath: any, args: any) {
   ] as any;
 }
 
-async function addSeen(callPath: any, args: any) {
+async function addFavorite(callPath: any, args: any) {
   const userId = callPath["userIds"][0];
 
   if (this.userId == null || this.userId !== Number(userId)) {
@@ -142,22 +146,22 @@ async function addSeen(callPath: any, args: any) {
   }
 
   const movieId = args[0];
-  const user = await addUserSeen(userId, movieId);
-  const seenLength = user.seen.length;
+  const user = await addUserFavorite(userId, movieId);
+  const favoriteLength = user.favorites.length;
 
   return [
     {
-      path: ["usersById", userId, "seen", seenLength - 1],
+      path: ["usersById", userId, "favorites", favoriteLength - 1],
       value: $ref(["moviesById", movieId])
     },
     {
-      path: ["usersById", userId, "seen", "length"],
-      value: seenLength
+      path: ["usersById", userId, "favorites", "length"],
+      value: favoriteLength
     }
   ];
 }
 
-async function removeSeen(callPath: any, args: any) {
+async function removeFavorite(callPath: any, args: any) {
   const userId = callPath["userIds"][0];
 
   if (this.userId == null || this.userId !== Number(userId)) {
@@ -165,18 +169,18 @@ async function removeSeen(callPath: any, args: any) {
   }
 
   const movieId = args[0];
-  const user = await removeUserSeen(userId, movieId);
-  const index = user.seen.indexOf(movieId);
-  const seenLength = user.seen.length;
+  const user = await removeUserFavorite(userId, movieId);
+  const index = user.favorites.indexOf(movieId);
+  const favoriteLength = user.favorites.length;
 
   return [
     {
-      path: ["usersById", userId, "seen", { from: index, to: seenLength }],
+      path: ["usersById", userId, "favorites", { from: index, to: favoriteLength }],
       invalidated: true
     },
     {
-      path: ["usersById", userId, "seen", "length"],
-      value: seenLength
+      path: ["usersById", userId, "favorites", "length"],
+      value: favoriteLength
     }
   ];
 }
@@ -199,11 +203,11 @@ export default [
     call: removeBookmark
   },
   {
-    route: "usersById[{integers:userIds}].addSeen",
-    call: addSeen
+    route: "usersById[{integers:userIds}].addFavorite",
+    call: addFavorite
   },
   {
-    route: "usersById[{integers:userIds}].removeSeen",
-    call: removeSeen
+    route: "usersById[{integers:userIds}].removeFavorite",
+    call: removeFavorite
   }
 ];

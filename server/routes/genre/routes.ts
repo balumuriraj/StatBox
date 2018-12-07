@@ -1,5 +1,5 @@
 import * as jsonGraph from "falcor-json-graph";
-import { findGenreById, findGenresCount, findMovieCountByGenreId } from "../../services/genre/service";
+import { findGenresByIds, findGenresCount, findMovieCountByGenreId } from "../../services/genre/service";
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
@@ -9,16 +9,16 @@ async function getGenreListNames(params: any) {
   const keys = params[2];
   const results: any[] = [];
 
-  for (const genreId of genreIds) {
-    const genreData = await findGenreById(genreId);
+  const genres = await findGenresByIds(genreIds);
 
+  genres.forEach((genre) => {
     for (const key of keys) {
       results.push({
-        path: ["genresById", genreId, key],
-        value: genreData[key] || null
+        path: ["genresById", genre.id, key],
+        value: genre[key] || null
       });
     }
-  }
+  });
 
   return results;
 }
@@ -42,23 +42,23 @@ async function getGenreListMovies(params: any) {
   const key = "movies";
   const results: any[] = [];
 
-  for (const genreId of genreIds) {
-    const genreData = await findGenreById(genreId);
+  const genres = await findGenresByIds(genreIds);
 
+  genres.forEach((genre) => {
     for (const movieIndex of movieIndices) {
-      const movieId = genreData.movieIds[movieIndex];
+      const movieId = genre.movieIds[movieIndex];
 
       results.push({
-        path: ["genresById", genreId, key, movieIndex],
+        path: ["genresById", genre.id, key, movieIndex],
         value: movieId ? $ref(["moviesById", movieId]) : null
       });
     }
 
     results.push({
-      path: ["genresById", genreId, key, "length"],
-      value: genreData.movieIds.length
+      path: ["genresById", genre.id, key, "length"],
+      value: genre.movieIds.length
     });
-  }
+  });
 
   return results;
 }
