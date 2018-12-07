@@ -11,7 +11,7 @@
     "tsc:w": "tsc -w",
     "lint": "tslint server/**/*.ts --fix",
     "build": "tsc -p ./prod.tsconfig.json && ncp './server/config' './dist/server/config'",
-    "postinstall": "npm install --only=dev && npm run build"
+    "heroku-postbuild": "npm install --only=dev --no-shrinkwrap && npm run build"
   },
   "repository": {
     "type": "git",
