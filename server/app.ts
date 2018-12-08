@@ -5,7 +5,7 @@ import * as express from "express";
 import * as falcorExpress from "falcor-express";
 import * as helmet from "helmet";
 import * as http from "http";
-import FalcorRouter from "./routes/falcorRouter";
+import FalcorRouter from "./routes/FalcorRouter";
 import restRouter from "./routes/restRouter";
 import tokenRouter from "./routes/tokenRouter";
 
