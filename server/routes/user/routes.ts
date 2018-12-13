@@ -1,5 +1,7 @@
 import * as jsonGraph from "falcor-json-graph";
+import { findMoviesByIds } from "../../services/movie/service";
 import { findReviewsByUserIds } from "../../services/review/service";
+import { findRolesByMovieIds } from "../../services/role/service";
 import {
   addUserBookmark,
   addUserFavorite,
@@ -11,7 +13,9 @@ import {
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
 
-async function getUsersById(params: any) {
+const sortFunc = (a, b) => b.rating - a.rating;
+
+async function getUsersByIds(params: any) {
   const { userIds } = params;
   const keys = params[2] || ["id", "authId", "bookmarks", "favorites"];
   const results: any[] = [];
@@ -60,9 +64,8 @@ async function getUsersById(params: any) {
   return results;
 }
 
-async function getUserReviewsById(params: any) {
+async function getUsersReviewsByIds(params: any) {
   const { userIds } = params;
-  console.log("params", params);
   const results: any[] = [];
 
   const reviewsByUserIds = await findReviewsByUserIds(userIds);
@@ -86,6 +89,154 @@ async function getUserReviewsById(params: any) {
       path: ["usersById", userId, "reviews", "length"],
       value
     });
+  }
+
+  return results;
+}
+
+async function getUsersMetadataByIds(params: any) {
+  const { userIds } = params;
+  const keys = params[3] || ["ratings", "movieMinutes", "moviesCount", "topActors", "topDirectors", "genres"];
+  const results: any[] = [];
+
+  const reviewsByUserIds = await findReviewsByUserIds(userIds);
+
+  for (const userId of userIds) {
+    const reviews = reviewsByUserIds.filter((review) => review.userId === userId);
+    const ratingsByMovieId = {};
+    const movieIds = [];
+    let ratings = [];
+
+    reviews.forEach((review) => {
+      ratingsByMovieId[review.movieId] = review.rating;
+      ratings.push(review.rating);
+      movieIds.push(review.movieId);
+    });
+
+    ratings = ratings.filter((rating) => !!rating);
+
+    const movies = await findMoviesByIds(movieIds);
+    const moviesCount = movieIds.length;
+    const defaultRuntime = 135;
+    const genreCounts = {};
+    let movieMinutes = 0;
+
+    movies.forEach((movie) => {
+      movieMinutes += movie.runtime || defaultRuntime;
+
+      if (movie.genre) {
+        movie.genre.forEach((genreName) => {
+          if (genreCounts[genreName]) {
+            genreCounts[genreName]++;
+          } else {
+            genreCounts[genreName] = 1;
+          }
+        });
+      }
+    });
+
+    const ratingsByCastId = {};
+    const ratingsByCrewId = {};
+
+    const cast = await findRolesByMovieIds(movieIds, "cast", 0);
+    const crew = await findRolesByMovieIds(movieIds, "crew", 0);
+
+    cast.forEach((role) => {
+      const movieRating = ratingsByMovieId[role.movieId];
+
+      if (ratingsByCastId[role.celebId]) {
+        ratingsByCastId[role.celebId].push(movieRating);
+      } else {
+        ratingsByCastId[role.celebId] = [movieRating];
+      }
+    });
+
+    crew.forEach((role) => {
+      const movieRating = ratingsByMovieId[role.movieId];
+
+      if (ratingsByCrewId[role.celebId]) {
+        ratingsByCrewId[role.celebId].push(movieRating);
+      } else {
+        ratingsByCrewId[role.celebId] = [movieRating];
+      }
+    });
+
+    const directors = [];
+    const actors = [];
+
+    for ( const celebId in ratingsByCastId) {
+      const ratingsOfCeleb = ratingsByCastId[celebId];
+
+      actors.push({
+        id: celebId,
+        rating: ratingsOfCeleb.reduce((a, b) => a + b) / ratingsOfCeleb.length
+      });
+    }
+
+    for ( const celebId in ratingsByCrewId) {
+      const ratingsOfCeleb = ratingsByCrewId[celebId];
+
+      directors.push({
+        id: celebId,
+        rating: ratingsOfCeleb.reduce((a, b) => a + b) / ratingsOfCeleb.length
+      });
+    }
+
+    for (const key of keys) {
+      let value = null;
+
+      if (key === "topDirectors") {
+        directors.sort(sortFunc).slice(0, 5).forEach((obj, idx) => {
+          results.push({
+            path: ["usersById", userId, "metadata", key, idx, "celeb"],
+            value: $ref(["celebsById", obj.id])
+          });
+          results.push({
+            path: ["usersById", userId, "metadata", key, idx, "rating"],
+            value: obj.rating
+          });
+        });
+      } else if (key === "topActors") {
+        actors.sort(sortFunc).slice(0, 5).forEach((obj, idx) => {
+          results.push({
+            path: ["usersById", userId, "metadata", key, idx, "celeb"],
+            value: $ref(["celebsById", obj.id])
+          });
+          results.push({
+            path: ["usersById", userId, "metadata", key, idx, "rating"],
+            value: obj.rating
+          });
+        });
+      } else {
+        if (key === "movieMinutes") {
+          value = $atom(movieMinutes);
+          value.$expires = 0; // expire immediately
+        } else if (key === "moviesCount") {
+          value = $atom(moviesCount);
+          value.$expires = 0; // expire immediately
+        } else if (key === "ratings") {
+          value = $atom(ratings);
+          value.$expires = 0; // expire immediately
+        } else if (key === "genres") {
+          const result = [];
+
+          for (const genreName in genreCounts) {
+            result.push({
+              name: genreName,
+              count: genreCounts[genreName]
+            });
+          }
+
+          value = $atom(result);
+          value.$expires = 0; // expire immediately
+        }
+
+        results.push({
+          path: ["usersById", userId, "metadata", key],
+          value
+        });
+      }
+    }
   }
 
   return results;
@@ -188,11 +339,15 @@ async function removeFavorite(callPath: any, args: any) {
 export default [
   {
     route: "usersById[{integers:userIds}]",
-    get: getUsersById
+    get: getUsersByIds
   },
   {
     route: "usersById[{integers:userIds}].reviews",
-    get: getUserReviewsById
+    get: getUsersReviewsByIds
+  },
+  {
+    route: "usersById[{integers:userIds}].metadata['genres','ratings','movieMinutes','moviesCount','topDirectors','topActors']",
+    get: getUsersMetadataByIds
   },
   {
     route: "usersById[{integers:userIds}].addBookmark",

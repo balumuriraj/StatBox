@@ -33,7 +33,6 @@ async function getReviewsById(params: any) {
 async function updateReview(callPath: any, args: any) {
   const userId = callPath["userIds"][0];
 
-  console.log(userId, this.userId);
   if (this.userId == null || this.userId !== Number(userId)) {
     throw new Error("not authorized");
   }

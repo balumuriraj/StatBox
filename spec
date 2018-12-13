@@ -69,7 +69,41 @@
         $ref("reviewsById[15]"),
         $ref("reviewsById[14]"),
         ...
-      ]
+      ],
+      metadata: {
+        ratings: [2.5, 3, 2, 3.5, ...],
+        moviesCount: 5,
+        movieMinutes: 725,
+        genres: [
+          {
+            genre: "sci-fi",
+            count: 5
+          }
+          ...
+        ],
+        topActors: [
+          {
+            celeb: $ref("celebsById[12]"),
+            rating: 4.5
+          },
+          {
+            celeb: $ref("celebsById[14]"),
+            rating: 3
+          },
+          ...
+        ],
+        topDirectors: [
+          {
+            celeb: $ref("celebsById[15]"),
+            rating: 3.5
+          },
+          {
+            celeb: $ref("celebsById[54]"),
+            rating: 2.5
+          },
+          ...
+        ],
+      }
     }
   }
 }

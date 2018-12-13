@@ -22,8 +22,13 @@ async function generateRolesData(roles: IRole[]) {
   return result;
 }
 
-export async function findRolesByMovieIds(movieIds: number[], category: string) {
+export async function findRolesByMovieIds(movieIds: number[], category: string, index?: number) {
   const query = { movieId: { $in: movieIds }, category };
+
+  if (index != null) {
+    query["index"] = index;
+  }
+
   const roles = await RoleModel.find(query);
   return await generateRolesData(roles);
 }
