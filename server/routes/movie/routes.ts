@@ -90,21 +90,33 @@ async function getMoviesMetadataByIds(pathSet: any) {
     return results;
   }
 
-  const reviews = await findUserReviewsByMovieIds(userId, movieIds);
-  const reviewsByMovieIds = {};
+  const userReviews = await findUserReviewsByMovieIds(userId, movieIds);
+  const userReviewsByMovieIds = {};
+  userReviews.forEach((userReview) => userReviewsByMovieIds[userReview.movieId] = userReview);
 
+  const reviews = await findReviewsByMovieIds(movieIds);
+  const reviewsByMovieIds = {};
   reviews.forEach((review) => {
-    reviewsByMovieIds[review.moviId] = review;
+    if (reviewsByMovieIds[review.movieId]) {
+      reviewsByMovieIds[review.movieId].push(review);
+    } else {
+      reviewsByMovieIds[review.movieId] = [review];
+    }
   });
 
+  console.log(reviewsByMovieIds);
+
   for (const movieId of movieIds) {
-    const review = reviewsByMovieIds[movieId];
-    const rating = review && review.rating || null;
+    const userReview = userReviewsByMovieIds[movieId];
+    const userRating = userReview && userReview.rating || null;
+    const movieReviews = reviewsByMovieIds[movieId] || [];
     const value = $atom({
       isBookmarked: userInfo["bookmarks"].indexOf(movieId) > -1,
       isFavorite: userInfo["favorites"].indexOf(movieId) > -1,
-      userRating: rating
+      ratings: movieReviews.map((review) => review.rating),
+      userRating
     });
+    console.log(value);
     value.$expires = 0; // expire immediately
     results.push({
       path: ["moviesById", movieId, prop],
