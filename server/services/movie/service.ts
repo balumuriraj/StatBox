@@ -92,8 +92,8 @@ export async function findMoviesCountBetweenDates(date1: any, date2: any) {
     {
       $match: {
         releasedate: {
-          $gte: date1,
-          $lt: date2
+          $gte: new Date(date1),
+          $lt: new Date(date2)
         }
       }
     },
@@ -101,17 +101,17 @@ export async function findMoviesCountBetweenDates(date1: any, date2: any) {
   ];
 
   const results = await MovieModel.aggregate(query);
-  return results;
+  return results && results[0] && results[0].count || 0;
 }
 
-export async function findMoviesBetweenDates(date1: any, date2: any) {
+export async function findMoviesBetweenDates(date1: any, date2: any, limit: number, skip: number) {
   const query = {
     releasedate: {
-      $gte: date1,
-      $lt: date2
+      $gte: new Date(date1),
+      $lt: new Date(date2)
     }
   };
 
-  const movies = await MovieModel.find(query);
+  const movies = await MovieModel.find(query, "releasedate", limit, skip);
   return await generateMoviesData(movies);
 }

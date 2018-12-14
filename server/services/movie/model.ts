@@ -58,9 +58,9 @@ export class MovieModel {
     });
   }
 
-  static find(query: any = {}): Promise<IMovie[]> {
+  static find(query: any = {}, sortField?: string, limitCount?: number, skipCount?: number): Promise<IMovie[]> {
     return new Promise<IMovie[]>((resolve, reject) => {
-      Movie.find(query, (err: any, result: IMovie[]) => {
+      Movie.find(query).sort(sortField && { sortField: -1 }).limit(limitCount).skip(skipCount).exec((err: any, result: IMovie[]) => {
         if (err) {
           reject(err);
         }

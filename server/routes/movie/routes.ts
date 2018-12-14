@@ -1,6 +1,6 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
-import { findMoviesBetweenDates, findMoviesByIds } from "../../services/movie/service";
+import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates } from "../../services/movie/service";
 import { findReviewsByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
@@ -104,8 +104,6 @@ async function getMoviesMetadataByIds(pathSet: any) {
     }
   });
 
-  console.log(reviewsByMovieIds);
-
   for (const movieId of movieIds) {
     const userReview = userReviewsByMovieIds[movieId];
     const userRating = userReview && userReview.rating || null;
@@ -116,7 +114,6 @@ async function getMoviesMetadataByIds(pathSet: any) {
       ratings: movieReviews.map((review) => review.rating),
       userRating
     });
-    console.log(value);
     value.$expires = 0; // expire immediately
     results.push({
       path: ["moviesById", movieId, prop],
@@ -127,8 +124,9 @@ async function getMoviesMetadataByIds(pathSet: any) {
   return results;
 }
 
-async function searchMoviesByQuery(pathSet: any) {
-  const queryStrings = pathSet[1];
+async function searchMoviesCountByQuery(pathSet: any) {
+  const { queryStrings } = pathSet;
+  const prop = pathSet[2] || "length";
   const query: any = {};
   const results = [];
 
@@ -139,9 +137,37 @@ async function searchMoviesByQuery(pathSet: any) {
     });
 
     const { date1, date2 } = query;
-    const movies = await findMoviesBetweenDates(Number(date1), Number(date2));
+    const moviesCount = await findMoviesCountBetweenDates(Number(date1), Number(date2));
 
-    movies.forEach((movie, index) => {
+    results.push({
+      path: ["moviesSearches", queryString, prop],
+      value: moviesCount
+    });
+  }
+
+  return results;
+}
+
+async function searchMoviesByQuery(pathSet: any) {
+  const { queryStrings, indices } = pathSet;
+  const query: any = {};
+  const results = [];
+
+  for (const queryString of queryStrings) {
+    queryString.split("&").forEach((str) => {
+      const arr = str.split("=");
+      query[arr[0]] = arr[1];
+    });
+
+    const { date1, date2 } = query;
+    const limit = indices.length;
+    const skip = indices[0];
+    const movies = await findMoviesBetweenDates(Number(date1), Number(date2), limit, skip);
+
+    for (let i = 0; i < indices.length; i++) {
+      const index = indices[i];
+      const movie = movies[i];
+
       let value: any = null;
       const movieId = movie.id;
 
@@ -153,12 +179,7 @@ async function searchMoviesByQuery(pathSet: any) {
         path: ["moviesSearches", queryString, index],
         value
       });
-    });
-
-    results.push({
-      path: ["moviesSearches", queryString, "length"],
-      value: movies.length
-    });
+    }
   }
 
   return results;
@@ -174,7 +195,11 @@ export default [
     get: getMoviesMetadataByIds
   },
   {
-    route: "moviesSearches[{keys:query}]",
+    route: "moviesSearches[{keys:queryStrings}].length",
+    get: searchMoviesCountByQuery
+  },
+  {
+    route: "moviesSearches[{keys:queryStrings}][{integers:indices}]",
     get: searchMoviesByQuery
   }
 ];
