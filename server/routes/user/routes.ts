@@ -96,7 +96,7 @@ async function getUsersReviewsByIds(params: any) {
 
 async function getUsersMetadataByIds(params: any) {
   const { userIds } = params;
-  const keys = params[3] || ["ratings", "movieMinutes", "moviesCount", "topActors", "topDirectors", "genres"];
+  const keys = params[3] || ["ratingBins", "movieMinutes", "moviesCount", "topActors", "topDirectors", "genres"];
   const results: any[] = [];
 
   const reviewsByUserIds = await findReviewsByUserIds(userIds);
@@ -105,15 +105,19 @@ async function getUsersMetadataByIds(params: any) {
     const reviews = reviewsByUserIds.filter((review) => review.userId === userId);
     const ratingsByMovieId = {};
     const movieIds = [];
-    let ratings = [];
+    const ratingBins = {};
 
     reviews.forEach((review) => {
       ratingsByMovieId[review.movieId] = review.rating;
-      ratings.push(review.rating);
+      if (review.rating) {
+        if (ratingBins[review.rating]) {
+          ratingBins[review.rating]++;
+        } else {
+          ratingBins[review.rating] = 1;
+        }
+      }
       movieIds.push(review.movieId);
     });
-
-    ratings = ratings.filter((rating) => !!rating);
 
     const movies = await findMoviesByIds(movieIds);
     const moviesCount = movieIds.length;
@@ -214,8 +218,8 @@ async function getUsersMetadataByIds(params: any) {
         } else if (key === "moviesCount") {
           value = $atom(moviesCount);
           value.$expires = 0; // expire immediately
-        } else if (key === "ratings") {
-          value = $atom(ratings);
+        } else if (key === "ratingBins") {
+          value = $atom(ratingBins);
           value.$expires = 0; // expire immediately
         } else if (key === "genres") {
           const result = [];
@@ -346,7 +350,7 @@ export default [
     get: getUsersReviewsByIds
   },
   {
-    route: "usersById[{integers:userIds}].metadata['genres','ratings','movieMinutes','moviesCount','topDirectors','topActors']",
+    route: "usersById[{integers:userIds}].metadata['genres','ratingBins','movieMinutes','moviesCount','topDirectors','topActors']",
     get: getUsersMetadataByIds
   },
   {

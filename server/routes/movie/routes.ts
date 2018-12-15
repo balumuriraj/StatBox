@@ -1,7 +1,7 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
 import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates } from "../../services/movie/service";
-import { findReviewsByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
+import { findRatingBinsByMovieId, findRatingsByMovieIds, findRatingsCountByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
 
@@ -12,19 +12,28 @@ async function getMoviesByIds(pathSet: any) {
   const { movieIds } = pathSet;
   const results: any[] = [];
   const props = pathSet[2] ||
-    [
-      "id", "title", "description", "cert", "releaseDate", "poster", "runtime", "genre", "cast", "crew", "rating"
-    ];
+    ["id", "title", "cert", "releaseDate", "poster", "runtime", "genre", "cast", "crew", "rating", "ratingsCount"];
 
   const movies = await findMoviesByIds(movieIds);
   const castRoles = await findRolesByMovieIds(movieIds, "cast");
   const crewRoles = await findRolesByMovieIds(movieIds, "crew");
-  const reviewsByMovieIds = await findReviewsByMovieIds(movieIds);
+
+  let ratingsByMovieIds = {};
+  let ratingsCountByMovieIds = {};
+
+  if (props.indexOf("rating") > -1) {
+    ratingsByMovieIds = await findRatingsByMovieIds(movieIds);
+  }
+
+  if (props.indexOf("ratingsCount") > -1) {
+    ratingsCountByMovieIds = await findRatingsCountByMovieIds(movieIds);
+  }
 
   movies.forEach((movie, index) => {
     const movieId = movie.id;
 
     for (const prop of props) {
+      // movie these to metadata
       if (prop === "cast" || prop === "crew") {
         let roles = null;
 
@@ -50,13 +59,9 @@ async function getMoviesByIds(pathSet: any) {
         } else if (prop === "genre") {
           value = $atom(value);
         } else if (prop === "rating") {
-          // TODO: update this
-          const reviews = reviewsByMovieIds.filter((review) => review.movieId === movieId);
-
-          if (reviews && reviews.length) {
-            const ratings = reviews.map((review) => review.rating);
-            value = ratings.reduce((a, b) => a + b) / ratings.length;
-          }
+          value = ratingsByMovieIds[movieId];
+        } else if (prop === "ratingsCount") {
+          value = ratingsCountByMovieIds[movieId];
         }
 
         results.push({
@@ -71,54 +76,48 @@ async function getMoviesByIds(pathSet: any) {
 }
 
 async function getMoviesMetadataByIds(pathSet: any) {
-  const userId = this.userId;
   const { movieIds } = pathSet;
   const results: any[] = [];
   const prop = pathSet[2];
+  const keys = pathSet[3] || ["ratingBins", "isBookmarked", "isFavorite", "userReview"];
 
-  if (!userId) {
-    return results;
-  }
-
+  const userId = this.userId;
   let userInfo = null;
+  const userReviewsByMovieIds = {};
 
   if (userId) {
-    userInfo = await findUserById(userId);
-  }
-
-  if (!userInfo) {
-    return results;
-  }
-
-  const userReviews = await findUserReviewsByMovieIds(userId, movieIds);
-  const userReviewsByMovieIds = {};
-  userReviews.forEach((userReview) => userReviewsByMovieIds[userReview.movieId] = userReview);
-
-  const reviews = await findReviewsByMovieIds(movieIds);
-  const reviewsByMovieIds = {};
-  reviews.forEach((review) => {
-    if (reviewsByMovieIds[review.movieId]) {
-      reviewsByMovieIds[review.movieId].push(review);
-    } else {
-      reviewsByMovieIds[review.movieId] = [review];
+    if (keys.indexOf("isBookmarked") > -1 || keys.indexOf("isFavorite") > -1) {
+      userInfo = await findUserById(userId);
     }
-  });
+
+    if (keys.indexOf("userReview") > -1) {
+      const userReviews = await findUserReviewsByMovieIds(userId, movieIds);
+      userReviews.forEach((userReview) => userReviewsByMovieIds[userReview.movieId] = userReview);
+    }
+  }
 
   for (const movieId of movieIds) {
-    const userReview = userReviewsByMovieIds[movieId];
-    const userRating = userReview && userReview.rating || null;
-    const movieReviews = reviewsByMovieIds[movieId] || [];
-    const value = $atom({
-      isBookmarked: userInfo["bookmarks"].indexOf(movieId) > -1,
-      isFavorite: userInfo["favorites"].indexOf(movieId) > -1,
-      ratings: movieReviews.map((review) => review.rating),
-      userRating
-    });
-    value.$expires = 0; // expire immediately
-    results.push({
-      path: ["moviesById", movieId, prop],
-      value
-    });
+    for (const key of keys) {
+      let value = null;
+
+      if (key === "ratingBins") {
+        value = await findRatingBinsByMovieId(movieId);
+      } else if (key === "isBookmarked") {
+        value = userInfo && userInfo["bookmarks"].indexOf(movieId) > -1;
+      } else if (key === "isFavorite") {
+        value = userInfo && userInfo["favorites"].indexOf(movieId) > -1;
+      } else if (key === "userReview") {
+        value = userReviewsByMovieIds[movieId] || { rating: null, watchWith: null, pace: null, plot: null, theme: null };
+      }
+
+      value = $atom(value);
+      value.$expires = 0; // expire immediately
+
+      results.push({
+        path: ["moviesById", movieId, prop, key],
+        value
+      });
+    }
   }
 
   return results;
@@ -187,11 +186,16 @@ async function searchMoviesByQuery(pathSet: any) {
 
 export default [
   {
+    // ['id', 'title', 'description', 'cert', 'releaseDate', 'poster', 'runtime', 'genre', 'cast', 'crew', 'rating']
     route: "moviesById[{integers:movieIds}]",
     get: getMoviesByIds
   },
   {
-    route: "moviesById[{integers:movieIds}].metadata",
+    route: "moviesById[{integers:movieIds}]['id', 'title', 'description', 'cert', 'releaseDate', 'poster', 'runtime', 'genre', 'cast', 'crew', 'rating', 'ratingsCount']",
+    get: getMoviesByIds
+  },
+  {
+    route: "moviesById[{integers:movieIds}].metadata['ratingBins', 'isBookmarked', 'isFavorite', 'userReview']",
     get: getMoviesMetadataByIds
   },
   {

@@ -7,7 +7,7 @@ export interface IReview extends Document {
   rating: number;
   watchWith: "friends" | "self" | "family";
   pace: "slow" | "fast";
-  theme: "light" | "dark";
+  theme: "happy" | "dark";
   plot: "simple" | "complex";
 }
 
@@ -41,7 +41,7 @@ Review.schema.path("pace").validate((value) => {
 }, "Invalid pace value");
 
 Review.schema.path("theme").validate((value) => {
-  return /light|dark/i.test(value);
+  return /happy|dark/i.test(value);
 }, "Invalid pace value");
 
 Review.schema.path("plot").validate((value) => {

@@ -64,22 +64,6 @@ export async function addOrUpdateReview(review: any) {
   return await generateReviewData(result);
 }
 
-export async function findReviewsCountByMovieId(movieId: number) {
-  const where: any = movieId && { movieId };
-  const group: any = {
-    _id: { movieId: "$movieId" },
-    count: { $sum: 1 }
-  };
-
-  const query = [
-    { $match: where },
-    { $group: group }
-  ];
-
-  const results = await ReviewModel.aggregate(query);
-  return results[0] && results[0].count || 0;
-}
-
 export async function findReviewsCountByUserId(userId: number) {
   const where: any = userId && { userId };
   const group: any = {
@@ -95,3 +79,88 @@ export async function findReviewsCountByUserId(userId: number) {
   const results = await ReviewModel.aggregate(query);
   return results[0] && results[0].count || 0;
 }
+
+export async function findRatingBinsByMovieId(movieId: number) {
+  const where: any = movieId && { movieId };
+  const group: any = {
+    _id: { rating: "$rating" },
+    count: { $sum: 1 }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const bins = {};
+
+  if (results) {
+    results.forEach((result) => {
+      const rating = result._id.rating;
+
+      if (rating) {
+        bins[rating] = result.count;
+      }
+    });
+  }
+
+  return bins;
+}
+
+export async function findRatingsByMovieIds(movieIds: number[]) {
+  const where: any = { movieId: { $in: movieIds }, rating: { $ne: null } };
+  const group: any = {
+    _id: { movieId: "$movieId" },
+    rating: { $avg: "$rating" }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const ratings = {};
+
+  if (results) {
+    results.forEach((result) => {
+      const movieId = result._id.movieId;
+
+      if (movieId) {
+        ratings[movieId] = result.rating;
+      }
+    });
+  }
+
+  return ratings;
+}
+
+export async function findRatingsCountByMovieIds(movieIds: number[]) {
+  const where: any = { movieId: { $in: movieIds }, rating: { $ne: null } };
+  const group: any = {
+    _id: { movieId: "$movieId" },
+    count: { $sum: 1 }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const ratingsCount = {};
+
+  if (results) {
+    results.forEach((result) => {
+      const movieId = result._id.movieId;
+
+      if (movieId) {
+        ratingsCount[movieId] = result.count;
+      }
+    });
+  }
+
+  return ratingsCount;
+}
+

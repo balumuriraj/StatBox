@@ -13,23 +13,31 @@
       poster: "http://statbox.com/indra.jpg",
       runtime: 150,
       releaseDate: 2018-01-25,
-      rating: 3.5, (set periodically by procedural call)
       genre: $atom(["Action", "Drama"]),
-      cast: [
-        $ref("celebsById[12]"),
-        $ref("celebsById[14]"),
-        ...
-      ],
-      crew: [
-        $ref("celebsById[15]"),
-        $ref("celebsById[54]"),
-        ...
-      ],
-      reviews: [
-        $ref("reviewsById[5]"),
-        $ref("reviewsById[4]"),
-        ...
-      ]
+
+      metadata: {
+        cast: [
+          $ref("celebsById[12]"),
+          $ref("celebsById[14]"),
+          ...
+        ],
+        crew: [
+          $ref("celebsById[15]"),
+          $ref("celebsById[54]"),
+          ...
+        ],
+        ratingBins: { 1: 5, 2: 34, 3: 54, 4: 12, 5: 1 },
+        rating: 3.5,
+        isBookmarked: true,
+        isFavorite: false,
+        userReview: {
+          rating: 3,
+          watchWith: "friends",
+          pace: "slow",
+          plot: "simple",
+          theme: "dark"
+        }
+      }
     },
     ...
   },
@@ -45,14 +53,6 @@
       ],
     }
   },
-  reviewsById: {
-    5: {
-      critic: $ref("usersById[65]"),
-      review: "https://test.com/review.html",
-      rating: 4
-    },
-    ...
-  },
   usersById: {
     2: {
       bookmarks: [
@@ -65,7 +65,7 @@
         $ref("moviesById[4]"),
         ...
       ],
-      ratings: [
+      reviews: [
         $ref("reviewsById[15]"),
         $ref("reviewsById[14]"),
         ...
