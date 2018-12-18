@@ -12,11 +12,9 @@ async function getMoviesByIds(pathSet: any) {
   const { movieIds } = pathSet;
   const results: any[] = [];
   const props = pathSet[2] ||
-    ["id", "title", "cert", "releaseDate", "poster", "runtime", "genre", "cast", "crew", "rating", "ratingsCount"];
+    ["id", "title", "cert", "releaseDate", "poster", "runtime", "genre", "rating", "ratingsCount"];
 
   const movies = await findMoviesByIds(movieIds);
-  const castRoles = await findRolesByMovieIds(movieIds, "cast");
-  const crewRoles = await findRolesByMovieIds(movieIds, "crew");
 
   let ratingsByMovieIds = {};
   let ratingsCountByMovieIds = {};
@@ -29,46 +27,28 @@ async function getMoviesByIds(pathSet: any) {
     ratingsCountByMovieIds = await findRatingsCountByMovieIds(movieIds);
   }
 
-  movies.forEach((movie, index) => {
+  movies.forEach((movie) => {
     const movieId = movie.id;
 
     for (const prop of props) {
-      // movie these to metadata
-      if (prop === "cast" || prop === "crew") {
-        let roles = null;
+      let value: any = movie[prop];
 
-        if (prop === "cast") {
-          roles = castRoles.filter((castRole) => castRole.movieId === movieId);
-        } else {
-          roles = crewRoles.filter((crewRole) => crewRole.movieId === movieId);
-        }
-
-        roles.forEach((role, idx) => {
-          results.push({
-            path: ["moviesById", movieId, prop, idx],
-            value: role.id ? $ref(["rolesById", role.id]) : null
-          });
-        });
-      } else {
-        let value: any = movie[prop];
-
-        if (prop === "releaseDate") {
-          const dateStr = movie["releasedate"];
-          const date = new Date(dateStr);
-          value = dateFormat(date, "mediumDate");
-        } else if (prop === "genre") {
-          value = $atom(value);
-        } else if (prop === "rating") {
-          value = ratingsByMovieIds[movieId];
-        } else if (prop === "ratingsCount") {
-          value = ratingsCountByMovieIds[movieId];
-        }
-
-        results.push({
-          path: ["moviesById", movieId, prop],
-          value: value || null
-        });
+      if (prop === "releaseDate") {
+        const dateStr = movie["releasedate"];
+        const date = new Date(dateStr);
+        value = dateFormat(date, "mediumDate");
+      } else if (prop === "genre") {
+        value = $atom(value);
+      } else if (prop === "rating") {
+        value = ratingsByMovieIds[movieId];
+      } else if (prop === "ratingsCount") {
+        value = ratingsCountByMovieIds[movieId];
       }
+
+      results.push({
+        path: ["moviesById", movieId, prop],
+        value: value || null
+      });
     }
   });
 
@@ -79,7 +59,7 @@ async function getMoviesMetadataByIds(pathSet: any) {
   const { movieIds } = pathSet;
   const results: any[] = [];
   const prop = pathSet[2];
-  const keys = pathSet[3] || ["ratingBins", "isBookmarked", "isFavorite", "userReview"];
+  const keys = pathSet[3] || ["cast", "crew", "ratingBins", "isBookmarked", "isFavorite", "userReview"];
 
   const userId = this.userId;
   let userInfo = null;
@@ -96,27 +76,62 @@ async function getMoviesMetadataByIds(pathSet: any) {
     }
   }
 
+  let castRoles: any;
+  let crewRoles: any;
+
+  if (keys.indexOf("cast") > -1) {
+    castRoles = await findRolesByMovieIds(movieIds, "cast");
+  }
+
+  if (keys.indexOf("crew") > -1) {
+    crewRoles = await findRolesByMovieIds(movieIds, "crew");
+  }
+
   for (const movieId of movieIds) {
     for (const key of keys) {
       let value = null;
 
-      if (key === "ratingBins") {
-        value = await findRatingBinsByMovieId(movieId);
-      } else if (key === "isBookmarked") {
-        value = userInfo && userInfo["bookmarks"].indexOf(movieId) > -1;
-      } else if (key === "isFavorite") {
-        value = userInfo && userInfo["favorites"].indexOf(movieId) > -1;
-      } else if (key === "userReview") {
-        value = userReviewsByMovieIds[movieId] || { rating: null, watchWith: null, pace: null, plot: null, theme: null };
+      if (key === "cast") {
+        const roles = castRoles.filter((castRole) => castRole.movieId === movieId);
+        roles.forEach((role, idx) => {
+          results.push({
+            path: ["moviesById", movieId, prop, key, idx],
+            value: role.id ? $ref(["rolesById", role.id]) : null
+          });
+        });
+      } else if (key === "crew") {
+        const roles = crewRoles.filter((crewRole) => crewRole.movieId === movieId);
+        roles.forEach((role, idx) => {
+          results.push({
+            path: ["moviesById", movieId, prop, key, idx],
+            value: role.id ? $ref(["rolesById", role.id]) : null
+          });
+        });
       }
+      else {
+        if (key === "ratingBins") {
+          value = await findRatingBinsByMovieId(movieId);
+          value = $atom(value);
+          value.$expires = -300000; // expires in 5 mins
+        } else if (key === "isBookmarked") {
+          value = userInfo && userInfo["bookmarks"].indexOf(movieId) > -1;
+          value = $atom(value);
+          value.$expires = 0; // expire immediately
+        } else if (key === "isFavorite") {
+          value = userInfo && userInfo["favorites"].indexOf(movieId) > -1;
+          value = $atom(value);
+          value.$expires = 0; // expire immediately
+        } else if (key === "userReview") {
+          value = userReviewsByMovieIds[movieId] || { rating: null, watchWith: null, pace: null, plot: null, theme: null };
+          value = $atom(value);
+          value.$expires = 0; // expire immediately
+        }
 
-      value = $atom(value);
-      value.$expires = 0; // expire immediately
-
-      results.push({
-        path: ["moviesById", movieId, prop, key],
-        value
-      });
+        results.push({
+          path: ["moviesById", movieId, prop, key],
+          value
+        });
+      }
     }
   }
 
@@ -186,16 +201,15 @@ async function searchMoviesByQuery(pathSet: any) {
 
 export default [
   {
-    // ['id', 'title', 'description', 'cert', 'releaseDate', 'poster', 'runtime', 'genre', 'cast', 'crew', 'rating']
     route: "moviesById[{integers:movieIds}]",
     get: getMoviesByIds
   },
   {
-    route: "moviesById[{integers:movieIds}]['id', 'title', 'description', 'cert', 'releaseDate', 'poster', 'runtime', 'genre', 'cast', 'crew', 'rating', 'ratingsCount']",
+    route: "moviesById[{integers:movieIds}]['id', 'title', 'description', 'cert', 'releaseDate', 'poster', 'runtime', 'genre', 'rating', 'ratingsCount']",
     get: getMoviesByIds
   },
   {
-    route: "moviesById[{integers:movieIds}].metadata['ratingBins', 'isBookmarked', 'isFavorite', 'userReview']",
+    route: "moviesById[{integers:movieIds}].metadata['cast', 'crew', 'ratingBins', 'isBookmarked', 'isFavorite', 'userReview']",
     get: getMoviesMetadataByIds
   },
   {
