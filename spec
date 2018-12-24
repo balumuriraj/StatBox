@@ -1,6 +1,6 @@
 // jsongraph
 {
-  movies: [
+  popularMovies: [
     $ref("moviesById[23]"),
     $ref("moviesById[24]"),
     ...

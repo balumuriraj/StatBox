@@ -164,3 +164,57 @@ export async function findRatingsCountByMovieIds(movieIds: number[]) {
   return ratingsCount;
 }
 
+export async function findPopularMoviesCount() {
+  const query = [
+    {
+      $group: {
+        _id: { movieId: "$movieId" },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        count: { $sum: 1 }
+      }
+    }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  return results && results[0] && results[0].count || 0;
+}
+
+export async function findPopularMovieIds(limit: number, skip: number) {
+  const query = [
+    {
+      $group: {
+        _id: { movieId: "$movieId" },
+        movieId: { $first: "$movieId" },
+        rating: { $avg: "$rating" },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1, rating: -1, movieId: -1 } },
+    { $skip: skip },
+    { $limit: limit }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const movieIds = [];
+
+  if (results) {
+    results.forEach((result) => {
+      const movieId = result._id.movieId;
+
+      if (movieId) {
+        movieIds.push({
+          movieId,
+          rating: result.rating,
+          count: result.count
+        });
+      }
+    });
+  }
+
+  return movieIds;
+}
