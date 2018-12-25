@@ -1,5 +1,5 @@
 import * as jsonGraph from "falcor-json-graph";
-import { addOrUpdateReview, findPopularMovieIds, findPopularMoviesCount, findReviewsByIds, findReviewsByUserId, findReviewsCountByUserId } from "../../services/review/service";
+import { addOrUpdateReview, findPopularMovieIds, findPopularMoviesCount, findReviewsByIds, findReviewsByUserId, findReviewsCountByUserId, findTopRatedMovieIds } from "../../services/review/service";
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
@@ -81,7 +81,7 @@ async function getPopularMoviesCount(pathSet: any) {
 
   return {
     path: ["popularMovies", "length"],
-    value: count
+    value: count < 100 ? count : 100
   };
 }
 
@@ -110,6 +110,40 @@ async function getPopularMovies(pathSet: any) {
   return results;
 }
 
+async function getTopRatedMoviesCount(pathSet: any) {
+  const count = await findPopularMoviesCount();
+
+  return {
+    path: ["topRatedMovies", "length"],
+    value: count < 100 ? count : 100
+  };
+}
+
+async function getTopRatedMovies(pathSet: any) {
+  const { indices } = pathSet;
+  const results = [];
+  const limit = indices.length;
+  const skip = indices[0];
+  const items = await findTopRatedMovieIds(limit, skip);
+
+  for (let i = 0; i < indices.length; i++) {
+    const index = indices[i];
+    const item: any = items[i];
+    let value = null;
+
+    if (item) {
+      value = $ref(["moviesById", item.movieId]);
+    }
+
+    results.push({
+      path: ["topRatedMovies", index],
+      value
+    });
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "reviewsById[{integers:reviewIds}]",
@@ -126,5 +160,13 @@ export default [
   {
     route: "popularMovies[{integers:indices}]",
     get: getPopularMovies
+  },
+  {
+    route: "topRatedMovies.length",
+    get: getTopRatedMoviesCount
+  },
+  {
+    route: "topRatedMovies[{integers:indices}]",
+    get: getTopRatedMovies
   }
 ];
