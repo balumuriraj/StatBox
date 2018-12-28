@@ -34,8 +34,8 @@
           rating: 3,
           watchWith: "friends",
           pace: "slow",
-          plot: "simple",
-          theme: "dark"
+          story: "simple",
+          rewatch: "no"
         }
       }
     },

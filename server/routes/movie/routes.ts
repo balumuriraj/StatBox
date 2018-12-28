@@ -1,7 +1,7 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
 import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates } from "../../services/movie/service";
-import { findRatingBinsByMovieId, findRatingsByMovieIds, findRatingsCountByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
+import { findRatingBinsByMovieId, findRatingsByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
 
@@ -17,14 +17,9 @@ async function getMoviesByIds(pathSet: any) {
   const movies = await findMoviesByIds(movieIds);
 
   let ratingsByMovieIds = {};
-  let ratingsCountByMovieIds = {};
 
   if (props.indexOf("rating") > -1) {
     ratingsByMovieIds = await findRatingsByMovieIds(movieIds);
-  }
-
-  if (props.indexOf("ratingsCount") > -1) {
-    ratingsCountByMovieIds = await findRatingsCountByMovieIds(movieIds);
   }
 
   movies.forEach((movie) => {
@@ -40,9 +35,9 @@ async function getMoviesByIds(pathSet: any) {
       } else if (prop === "genre") {
         value = $atom(value);
       } else if (prop === "rating") {
-        value = ratingsByMovieIds[movieId];
+        value = ratingsByMovieIds[movieId] && ratingsByMovieIds[movieId].rating;
       } else if (prop === "ratingsCount") {
-        value = ratingsCountByMovieIds[movieId];
+        value = ratingsByMovieIds[movieId] && ratingsByMovieIds[movieId].count;
       }
 
       results.push({
@@ -122,7 +117,7 @@ async function getMoviesMetadataByIds(pathSet: any) {
           value = $atom(value);
           value.$expires = 0; // expire immediately
         } else if (key === "userReview") {
-          value = userReviewsByMovieIds[movieId] || { rating: null, watchWith: null, pace: null, plot: null, theme: null };
+          value = userReviewsByMovieIds[movieId] || { rating: null, watchWith: null, pace: null, story: null, rewatch: null };
           value = $atom(value);
           value.$expires = 0; // expire immediately
         }

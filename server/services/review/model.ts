@@ -7,8 +7,8 @@ export interface IReview extends Document {
   rating: number;
   watchWith: "friends" | "self" | "family";
   pace: "slow" | "fast";
-  theme: "happy" | "dark";
-  plot: "simple" | "complex";
+  rewatch: "yes" | "no";
+  story: "simple" | "complex";
 }
 
 const reviewSchema = new Schema({
@@ -17,8 +17,8 @@ const reviewSchema = new Schema({
   rating: Number,
   watchWith: String,
   pace: String,
-  theme: String,
-  plot: String
+  rewatch: String,
+  story: String
 });
 
 reviewSchema.plugin(autoIncrement.plugin, { model: "Review", startAt: 1 });
@@ -40,13 +40,13 @@ Review.schema.path("pace").validate((value) => {
   return /slow|fast/i.test(value);
 }, "Invalid pace value");
 
-Review.schema.path("theme").validate((value) => {
-  return /happy|dark/i.test(value);
-}, "Invalid pace value");
+Review.schema.path("rewatch").validate((value) => {
+  return /yes|no/i.test(value);
+}, "Invalid rewatch value");
 
-Review.schema.path("plot").validate((value) => {
+Review.schema.path("story").validate((value) => {
   return /simple|complex/i.test(value);
-}, "Invalid plot value");
+}, "Invalid story value");
 
 export class ReviewModel {
   constructor() {}

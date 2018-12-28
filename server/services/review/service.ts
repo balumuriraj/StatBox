@@ -19,8 +19,8 @@ async function generateReviewData(review: IReview) {
     movieId: review.movieId,
     watchWith: review.watchWith,
     pace: review.pace,
-    theme: review.theme,
-    plot: review.plot
+    rewatch: review.rewatch,
+    story: review.story
   };
 }
 
@@ -112,7 +112,8 @@ export async function findRatingsByMovieIds(movieIds: number[]) {
   const where: any = { movieId: { $in: movieIds }, rating: { $ne: null } };
   const group: any = {
     _id: { movieId: "$movieId" },
-    rating: { $avg: "$rating" }
+    rating: { $avg: "$rating" },
+    count: { $sum: 1 }
   };
 
   const query = [
@@ -128,40 +129,15 @@ export async function findRatingsByMovieIds(movieIds: number[]) {
       const movieId = result._id.movieId;
 
       if (movieId) {
-        ratings[movieId] = result.rating;
+        ratings[movieId] = {
+          rating: result.rating,
+          count: result.count
+        };
       }
     });
   }
 
   return ratings;
-}
-
-export async function findRatingsCountByMovieIds(movieIds: number[]) {
-  const where: any = { movieId: { $in: movieIds }, rating: { $ne: null } };
-  const group: any = {
-    _id: { movieId: "$movieId" },
-    count: { $sum: 1 }
-  };
-
-  const query = [
-    { $match: where },
-    { $group: group }
-  ];
-
-  const results = await ReviewModel.aggregate(query);
-  const ratingsCount = {};
-
-  if (results) {
-    results.forEach((result) => {
-      const movieId = result._id.movieId;
-
-      if (movieId) {
-        ratingsCount[movieId] = result.count;
-      }
-    });
-  }
-
-  return ratingsCount;
 }
 
 export async function findPopularMoviesCount() {

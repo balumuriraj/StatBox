@@ -6,7 +6,7 @@ const $atom = jsonGraph.atom;
 
 async function getReviewsById(params: any) {
   const { reviewIds } = params;
-  const keys = params[2] || ["id", "movie", "rating", "watchWith", "pace", "theme", "plot"];
+  const keys = params[2] || ["id", "movie", "rating", "watchWith", "pace", "rewatch", "story"];
   const results: any[] = [];
 
   const reviews = await findReviewsByIds(reviewIds);
