@@ -42,6 +42,7 @@ router.use("/", async (req, res, next) => {
   } catch (err) {
     // handle err
     console.log("err!!", err);
+    res.status(403).send("invalid token!");
   }
 });
 

@@ -25,3 +25,10 @@ export async function findCelebsByIds(ids: number[]) {
   const celebs = await CelebModel.find(query);
   return await generateCelebsData(celebs);
 }
+
+export async function findAllCelebs() {
+  const query = {};
+  const celebs = await CelebModel.find(query);
+  return await generateCelebsData(celebs);
+}
+

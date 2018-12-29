@@ -73,7 +73,7 @@ async function createDBFromIdleBrain(criticInfo: any) {
     const rating = strToNum(ratingStr);
 
     if (name && link && rating) {
-      const movies = await MovieModel.find({ name });
+      const movies = await MovieModel.find([{ name }]);
       const movie = movies[0];
 
       if (movie && movie._id) {
@@ -133,7 +133,7 @@ async function createDBFromGreatAndhra(criticInfo: any) {
       }
 
       if (name && rating) {
-        const movies = await MovieModel.find({ name });
+        const movies = await MovieModel.find([{ name }]);
         const movie = movies[0];
 
         if (movie && movie._id) {
@@ -177,7 +177,7 @@ async function createDBFrom123Telugu(criticInfo: any) {
         console.log(name, rating);
 
         if (name && rating) {
-          const movies = await MovieModel.find({ name });
+          const movies = await MovieModel.find([{ name }]);
           const movie = movies[0];
 
           if (movie && movie._id) {

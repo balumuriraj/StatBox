@@ -10,7 +10,6 @@ export interface IMovie extends Document {
   genre: [string];
   runtime: number;
   releasedate: Date;
-  rating: number;
 }
 
 const movieSchema = new Schema({
@@ -21,11 +20,11 @@ const movieSchema = new Schema({
   poster: String,
   genre: [String],
   runtime: Number,
-  releasedate: Date,
-  rating: Number
+  releasedate: Date
 });
 
 movieSchema.plugin(autoIncrement.plugin, { model: "Movie", startAt: 1 });
+movieSchema.index({ title: "text" });
 
 const Movie = mongoose.model<IMovie>("Movie", movieSchema, "Movies");
 
@@ -58,9 +57,9 @@ export class MovieModel {
     });
   }
 
-  static find(query: any = {}, sortField?: string, limitCount?: number, skipCount?: number): Promise<IMovie[]> {
+  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IMovie[]> {
     return new Promise<IMovie[]>((resolve, reject) => {
-      Movie.find(query).sort(sortField && { sortField: -1 }).limit(limitCount).skip(skipCount).exec((err: any, result: IMovie[]) => {
+      Movie.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: IMovie[]) => {
         if (err) {
           reject(err);
         }

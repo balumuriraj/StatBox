@@ -20,13 +20,12 @@ async function generateMovieData(movie: IMovie) {
     poster: movie.poster,
     genre: movie.genre,
     runtime: movie.runtime,
-    releasedate: movie.releasedate,
-    rating: movie.rating
+    releasedate: movie.releasedate
   };
 }
 
 export async function findMoviesByIds(ids: number[]) {
-  const query = { _id: { $in: ids } };
+  const query = [{ _id: { $in: ids } }];
   const movies = await MovieModel.find(query);
   return await generateMoviesData(movies);
 }
@@ -105,13 +104,34 @@ export async function findMoviesCountBetweenDates(date1: any, date2: any) {
 }
 
 export async function findMoviesBetweenDates(date1: any, date2: any, limit: number, skip: number) {
-  const query = {
-    releasedate: {
-      $gte: new Date(date1),
-      $lt: new Date(date2)
+  const query = [
+    {
+      releasedate: {
+        $gte: new Date(date1),
+        $lt: new Date(date2)
+      }
     }
-  };
+  ];
 
-  const movies = await MovieModel.find(query, "releasedate", limit, skip);
+  const sort = { releasedate: -1 };
+
+  const movies = await MovieModel.find(query, sort, limit, skip);
+  return await generateMoviesData(movies);
+}
+
+// Full text search
+export async function findMoviesByTerm(term: string) {
+  const query = [
+    { $text: { $search: term } },
+    { score: { $meta: "textScore" } }
+  ];
+  const sort = { score: { $meta: "textScore" } };
+  const movies = await MovieModel.find(query, sort, 10);
+  return await generateMoviesData(movies);
+}
+
+export async function findAllMovies() {
+  const query = [];
+  const movies = await MovieModel.find(query);
   return await generateMoviesData(movies);
 }

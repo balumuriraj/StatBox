@@ -173,7 +173,7 @@ async function searchMoviesByQuery(pathSet: any) {
     const skip = indices[0];
     const movies = await findMoviesBetweenDates(Number(date1), Number(date2), limit, skip);
 
-    for (let i = 0; i < indices.length; i++) {
+    for (let i = 0; i < movies.length; i++) {
       const index = indices[i];
       const movie = movies[i];
 
