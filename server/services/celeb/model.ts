@@ -48,9 +48,9 @@ export class CelebModel {
     });
   }
 
-  static find(query: any = {}): Promise<ICeleb[]> {
+  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<ICeleb[]> {
     return new Promise<ICeleb[]>((resolve, reject) => {
-      Celeb.find(query, (err: any, result: ICeleb[]) => {
+      Celeb.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: ICeleb[]) => {
         if (err) {
           reject(err);
         }

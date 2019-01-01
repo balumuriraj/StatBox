@@ -13,7 +13,7 @@ async function init() {
   const celebRecords = await findAllCelebs();
   while (celebRecords.length) { celebsIndex.addObjects(celebRecords.splice(0, 10000)); }
 
-  console.log("push completed!");
+  console.log("algoliasearch push completed!");
 }
 
 init();

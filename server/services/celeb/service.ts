@@ -21,13 +21,13 @@ async function generateCelebData(celeb: ICeleb) {
 }
 
 export async function findCelebsByIds(ids: number[]) {
-  const query = { _id: { $in: ids } };
+  const query = [{ _id: { $in: ids } }];
   const celebs = await CelebModel.find(query);
   return await generateCelebsData(celebs);
 }
 
 export async function findAllCelebs() {
-  const query = {};
+  const query = [{}];
   const celebs = await CelebModel.find(query);
   return await generateCelebsData(celebs);
 }

@@ -5,7 +5,6 @@ export interface IMovie extends Document {
   title: string;
   description: string;
   cert: string;
-  url: string;
   poster: string;
   genre: [string];
   runtime: number;
@@ -16,7 +15,6 @@ const movieSchema = new Schema({
   title: String,
   description: String,
   cert: String,
-  url: String,
   poster: String,
   genre: [String],
   runtime: Number,
