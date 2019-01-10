@@ -59,6 +59,10 @@ export async function findReviewsByUserIds(userIds: number[]) {
 }
 
 export async function addOrUpdateReview(review: any) {
+  if (review) {
+    review.timestamp = Date.now();
+  }
+
   const query = { userId: review.userId, movieId: review.movieId };
   const result = await ReviewModel.update(query, review);
   return await generateReviewData(result);

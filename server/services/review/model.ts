@@ -9,6 +9,7 @@ export interface IReview extends Document {
   pace: "slow" | "fast";
   rewatch: "yes" | "no";
   story: "simple" | "complex";
+  timestamp: number;
 }
 
 const reviewSchema = new Schema({
@@ -18,13 +19,15 @@ const reviewSchema = new Schema({
   watchWith: String,
   pace: String,
   rewatch: String,
-  story: String
+  story: String,
+  timestamp: Number
 });
 
 reviewSchema.plugin(autoIncrement.plugin, { model: "Review", startAt: 1 });
 reviewSchema.index({userId: 1}, {unique: false});
 reviewSchema.index({movieId: 1}, {unique: false});
 reviewSchema.index({movieId: 1, userId: 1}, {unique: true});
+reviewSchema.index({timestamp: 1}, {unique: false});
 
 const Review = mongoose.model<IReview>("Review", reviewSchema, "Reviews");
 
