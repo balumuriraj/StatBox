@@ -1,5 +1,6 @@
 import * as jsonGraph from "falcor-json-graph";
 import { findGenresByIds, findGenresCount, findMovieCountByGenreId } from "../../services/genre/service";
+import { sortMovieIds } from "../../services/movie/service";
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
@@ -29,10 +30,10 @@ async function getGenreListLength(params: any) {
 
   const count = await findGenresCount();
 
-    results.push({
-      path: ["genresById", key],
-      value: count || null
-    });
+  results.push({
+    path: ["genresById", key],
+    value: count || null
+  });
 
   return results;
 }
@@ -80,6 +81,40 @@ async function getGenreListMoviesLength(params: any) {
   return results;
 }
 
+async function getSortedGenreListMovies(params: any) {
+  const { genreIds, movieIndices } = params;
+  const sorts = params[2];
+  const results: any[] = [];
+
+  for (const sortBy of sorts) {
+    const genres = await findGenresByIds(genreIds);
+
+    for (const genre of genres) {
+      const limit = movieIndices.length;
+      const skip = movieIndices[0];
+      const sortedMovieIds = await sortMovieIds(genre.movieIds, sortBy, limit, skip);
+
+      console.log(sortedMovieIds);
+
+      for (const movieIndex of movieIndices) {
+        const movieId = sortedMovieIds[movieIndex];
+
+        results.push({
+          path: ["genresById", genre.id, sortBy, movieIndex],
+          value: movieId ? $ref(["moviesById", movieId]) : null
+        });
+      }
+
+      results.push({
+        path: ["genresById", genre.id, sortBy, "length"],
+        value: genre.movieIds.length
+      });
+    }
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "genresById[{integers:genreIds}]['id', 'name']",
@@ -96,5 +131,9 @@ export default [
   {
     route: "genresById[{integers:genreIds}].movies.length",
     get: getGenreListMoviesLength
+  },
+  {
+    route: "genresById[{integers:genreIds}]['releasedate','title','rating'][{integers:movieIndices}]",
+    get: getSortedGenreListMovies
   }
 ];

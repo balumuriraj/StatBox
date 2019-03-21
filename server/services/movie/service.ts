@@ -119,6 +119,22 @@ export async function findMoviesBetweenDates(date1: any, date2: any, limit: numb
   return await generateMoviesData(movies);
 }
 
+export async function sortMovieIds(ids: number[], sortBy: string, limit: number, skip: number) {
+  const query = [
+    {
+      _id : { $in : ids }
+    },
+    {
+      _id: 1
+    }
+  ];
+  const sort = {};
+  sort[sortBy] = 1; // ascending order
+
+  const movies = await MovieModel.find(query, sort, limit, skip);
+  return movies.map((movie) => movie._id);
+}
+
 // Full text search
 export async function findMoviesByTerm(term: string) {
   const query = [
