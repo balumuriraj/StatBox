@@ -85,19 +85,19 @@ async function getSortedGenreListMovies(params: any) {
   const { genreIds, movieIndices } = params;
   const sorts = params[2];
   const results: any[] = [];
+  const genres = await findGenresByIds(genreIds);
+
+  console.log("working...");
 
   for (const sortBy of sorts) {
-    const genres = await findGenresByIds(genreIds);
-
     for (const genre of genres) {
       const limit = movieIndices.length;
       const skip = movieIndices[0];
       const sortedMovieIds = await sortMovieIds(genre.movieIds, sortBy, limit, skip);
 
-      console.log(sortedMovieIds);
-
-      for (const movieIndex of movieIndices) {
-        const movieId = sortedMovieIds[movieIndex];
+      for (const index in movieIndices) {
+        const movieId = sortedMovieIds[index];
+        const movieIndex = movieIndices[index];
 
         results.push({
           path: ["genresById", genre.id, sortBy, movieIndex],
@@ -111,6 +111,8 @@ async function getSortedGenreListMovies(params: any) {
       });
     }
   }
+
+  console.log(results);
 
   return results;
 }
