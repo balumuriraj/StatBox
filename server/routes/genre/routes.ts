@@ -82,37 +82,37 @@ async function getGenreListMoviesLength(params: any) {
 }
 
 async function getSortedGenreListMovies(params: any) {
-  const { genreIds, movieIndices } = params;
+  const { genreKeys, movieIndices } = params;
   const sorts = params[2];
+  const limit = movieIndices.length;
+  const skip = movieIndices[0];
   const results: any[] = [];
-  const genres = await findGenresByIds(genreIds);
 
-  console.log("working...");
+  for (const genreKey of genreKeys) {
+    const ids = genreKey.toString().split(",").map((id) => Number(id.trim()));
+    const genres = await findGenresByIds(ids);
+    const movieIds = [];
+    genres.forEach((genre) => movieIds.push(...genre.movieIds));
 
-  for (const sortBy of sorts) {
-    for (const genre of genres) {
-      const limit = movieIndices.length;
-      const skip = movieIndices[0];
-      const sortedMovieIds = await sortMovieIds(genre.movieIds, sortBy, limit, skip);
+    for (const sortBy of sorts) {
+      const sortedMovieIds = await sortMovieIds(movieIds, sortBy, limit, skip);
 
       for (const index in movieIndices) {
         const movieId = sortedMovieIds[index];
         const movieIndex = movieIndices[index];
 
         results.push({
-          path: ["genresById", genre.id, sortBy, movieIndex],
+          path: ["sortedMoviesByGenreKeys", genreKey, sortBy, movieIndex],
           value: movieId ? $ref(["moviesById", movieId]) : null
         });
       }
 
       results.push({
-        path: ["genresById", genre.id, sortBy, "length"],
-        value: genre.movieIds.length
+        path: ["sortedMoviesByGenreKeys", genreKey, sortBy, "length"],
+        value: movieIds.length
       });
     }
   }
-
-  console.log(results);
 
   return results;
 }
@@ -135,7 +135,7 @@ export default [
     get: getGenreListMoviesLength
   },
   {
-    route: "genresById[{integers:genreIds}]['releasedate','title','rating'][{integers:movieIndices}]",
+    route: "sortedMoviesByGenreKeys[{keys:genreKeys}]['releasedate','title','rating'][{integers:movieIndices}]",
     get: getSortedGenreListMovies
   }
 ];
