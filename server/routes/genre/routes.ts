@@ -117,6 +117,29 @@ async function getSortedGenreListMovies(params: any) {
   return results;
 }
 
+async function getSortedGenreListMoviesLength(params: any) {
+  const { genreKeys } = params;
+  const sorts = params[2];
+  const results: any[] = [];
+
+  for (const genreKey of genreKeys) {
+    const ids = genreKey.toString().split(",").map((id) => Number(id.trim()));
+    const genres = await findGenresByIds(ids);
+    const movieIds = [];
+    genres.forEach((genre) => movieIds.push(...genre.movieIds));
+    const length = movieIds.length;
+
+    for (const sortBy of sorts) {
+      results.push({
+        path: ["sortedMoviesByGenreKeys", genreKey, sortBy, "length"],
+        value: length
+      });
+    }
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "genresById[{integers:genreIds}]['id', 'name']",
@@ -137,5 +160,9 @@ export default [
   {
     route: "sortedMoviesByGenreKeys[{keys:genreKeys}]['releasedate','title','rating'][{integers:movieIndices}]",
     get: getSortedGenreListMovies
+  },
+  {
+    route: "sortedMoviesByGenreKeys[{keys:genreKeys}]['releasedate','title','rating'].length",
+    get: getSortedGenreListMoviesLength
   }
 ];
