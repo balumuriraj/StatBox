@@ -1,7 +1,7 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
 import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates } from "../../services/movie/service";
-import { findRatingBinsByMovieId, findRatingsByMovieIds, findUserReviewsByMovieIds } from "../../services/review/service";
+import { findRatingBinsByMovieId, findRatingsByMovieIds, findReviewBinsByMovieId, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
 
@@ -54,7 +54,7 @@ async function getMoviesMetadataByIds(pathSet: any) {
   const { movieIds } = pathSet;
   const results: any[] = [];
   const prop = pathSet[2];
-  const keys = pathSet[3] || ["cast", "crew", "ratingBins", "isBookmarked", "isFavorite", "userReview"];
+  const keys = pathSet[3] || ["cast", "crew", "ratingBins", "attributes", "isBookmarked", "isFavorite", "userReview"];
 
   const userId = this.userId;
   let userInfo = null;
@@ -106,6 +106,10 @@ async function getMoviesMetadataByIds(pathSet: any) {
       else {
         if (key === "ratingBins") {
           value = await findRatingBinsByMovieId(movieId);
+          value = $atom(value);
+          value.$expires = -300000; // expires in 5 mins
+        } else if (key === "attributes") {
+          value = await findReviewBinsByMovieId(movieId);
           value = $atom(value);
           value.$expires = -300000; // expires in 5 mins
         } else if (key === "isBookmarked") {
@@ -204,7 +208,7 @@ export default [
     get: getMoviesByIds
   },
   {
-    route: "moviesById[{integers:movieIds}].metadata['cast', 'crew', 'ratingBins', 'isBookmarked', 'isFavorite', 'userReview']",
+    route: "moviesById[{integers:movieIds}].metadata['cast', 'crew', 'ratingBins', 'attributes', 'isBookmarked', 'isFavorite', 'userReview']",
     get: getMoviesMetadataByIds
   },
   {

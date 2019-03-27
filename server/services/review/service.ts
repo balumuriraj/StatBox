@@ -84,6 +84,55 @@ export async function findReviewsCountByUserId(userId: number) {
   return results[0] && results[0].count || 0;
 }
 
+export async function findReviewBinsByMovieId(movieId: number) {
+  const where: any = movieId && { movieId };
+  const group: any = {
+    _id: "$review_counts",
+    pace_slow_count: { $sum: { $cond: [{ $eq: ["$pace", "slow"] }, 1, 0] } },
+    pace_fast_count: { $sum: { $cond: [{ $eq: ["$pace", "fast"] }, 1, 0] } },
+    story_simple_count: { $sum: { $cond: [{ $eq: ["$story", "simple"] }, 1, 0] } },
+    story_complex_count: { $sum: { $cond: [{ $eq: ["$story", "complex"] }, 1, 0] } },
+    rewatch_yes_count: { $sum: { $cond: [{ $eq: ["$rewatch", "yes"] }, 1, 0] } },
+    rewatch_no_count: { $sum: { $cond: [{ $eq: ["$rewatch", "no"] }, 1, 0] } },
+    watchWith_family_count: { $sum: { $cond: [{ $eq: ["$watchWith", "family"] }, 1, 0] } },
+    watchWith_friends_count: { $sum: { $cond: [{ $eq: ["$watchWith", "friends"] }, 1, 0] } },
+    watchWith_self_count: { $sum: { $cond: [{ $eq: ["$watchWith", "self"] }, 1, 0] } }
+  };
+  const project = {
+    _id: 0,
+    pace: {
+      slow: "$pace_slow_count",
+      fast: "$pace_fast_count"
+    },
+    story: {
+      simple: "$story_simple_count",
+      complex: "$story_complex_count"
+    },
+    rewatch: {
+      yes: "$rewatch_yes_count",
+      no: "$rewatch_no_count"
+    },
+    watchWith: {
+      family: "$watchWith_family_count",
+      friends: "$watchWith_friends_count",
+      self: "$watchWith_self_count"
+    }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group },
+    { $project: project }
+  ];
+
+  try {
+    const results = await ReviewModel.aggregate(query);
+    return results && results[0];
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 export async function findRatingBinsByMovieId(movieId: number) {
   const where: any = movieId && { movieId };
   const group: any = {
