@@ -247,94 +247,109 @@ async function getUsersMetadataByIds(params: any) {
 }
 
 async function addBookmark(callPath: any, args: any) {
-  const userId = callPath["userIds"][0];
-
-  if (this.userId == null || this.userId !== Number(userId)) {
+  if (this.userId == null) {
     throw new Error("not authorized");
   }
 
   const movieId = args[0];
-  const user = await addUserBookmark(userId, movieId);
+
+  if (movieId == null) {
+    throw new Error("invalid movieId");
+  }
+
+  const user = await addUserBookmark(this.userId, movieId);
   const bookmarksLength = user.bookmarks.length;
 
   return [
     {
-      path: ["usersById", userId, "bookmarks", bookmarksLength - 1],
+      path: ["userBookmarks", bookmarksLength - 1],
       value: $ref(["moviesById", movieId])
     },
     {
-      path: ["usersById", userId, "bookmarks", "length"],
+      path: ["userBookmarks", "length"],
       value: bookmarksLength
     }
   ];
 }
 
 async function removeBookmark(callPath: any, args: any) {
-  const userId = callPath["userIds"][0];
-
-  if (this.userId == null || this.userId !== Number(userId)) {
+  if (this.userId == null) {
     throw new Error("not authorized");
   }
 
   const movieId = args[0];
-  const user = await removeUserBookmark(userId, movieId);
+
+  if (movieId == null) {
+    throw new Error("invalid movieId");
+  }
+
+  const user = await removeUserBookmark(this.userId, movieId);
   const index = user.bookmarks.indexOf(movieId);
   const bookmarksLength = user.bookmarks.length;
 
   return [
     {
-      path: ["usersById", userId, "bookmarks", { from: index, to: bookmarksLength }],
+      path: ["userBookmarks", { from: index, to: bookmarksLength }],
       invalidated: true
     },
     {
-      path: ["usersById", userId, "bookmarks", "length"],
+      path: ["userBookmarks", "length"],
       value: bookmarksLength
     }
   ] as any;
 }
 
 async function addFavorite(callPath: any, args: any) {
-  const userId = callPath["userIds"][0];
-
-  if (this.userId == null || this.userId !== Number(userId)) {
+  if (this.userId == null) {
     throw new Error("not authorized");
   }
 
   const movieId = args[0];
-  const user = await addUserFavorite(userId, movieId);
+
+  if (movieId == null) {
+    throw new Error("invalid movieId");
+  }
+  console.log("addFavorite", this.userId, movieId);
+  const user = await addUserFavorite(this.userId, movieId);
+  console.log(user);
   const favoriteLength = user.favorites.length;
 
   return [
     {
-      path: ["usersById", userId, "favorites", favoriteLength - 1],
+      path: ["userFavorites", favoriteLength - 1],
       value: $ref(["moviesById", movieId])
     },
     {
-      path: ["usersById", userId, "favorites", "length"],
+      path: ["userFavorites", "length"],
       value: favoriteLength
     }
   ];
 }
 
 async function removeFavorite(callPath: any, args: any) {
-  const userId = callPath["userIds"][0];
-
-  if (this.userId == null || this.userId !== Number(userId)) {
+  if (this.userId == null) {
     throw new Error("not authorized");
   }
 
   const movieId = args[0];
-  const user = await removeUserFavorite(userId, movieId);
+
+  if (movieId == null) {
+    throw new Error("invalid movieId");
+  }
+
+  console.log("removeFavorite", this.userId, movieId);
+  const user = await removeUserFavorite(this.userId, movieId);
+  console.log(user);
   const index = user.favorites.indexOf(movieId);
   const favoriteLength = user.favorites.length;
 
   return [
     {
-      path: ["usersById", userId, "favorites", { from: index, to: favoriteLength }],
+      path: ["userFavorites", { from: index, to: favoriteLength }],
       invalidated: true
     },
     {
-      path: ["usersById", userId, "favorites", "length"],
+      path: ["userFavorites", "length"],
       value: favoriteLength
     }
   ];
@@ -354,19 +369,19 @@ export default [
     get: getUsersMetadataByIds
   },
   {
-    route: "usersById[{integers:userIds}].addBookmark",
+    route: "addBookmark",
     call: addBookmark
   },
   {
-    route: "usersById[{integers:userIds}].removeBookmark",
+    route: "removeBookmark",
     call: removeBookmark
   },
   {
-    route: "usersById[{integers:userIds}].addFavorite",
+    route: "addFavorite",
     call: addFavorite
   },
   {
-    route: "usersById[{integers:userIds}].removeFavorite",
+    route: "removeFavorite",
     call: removeFavorite
   }
 ];

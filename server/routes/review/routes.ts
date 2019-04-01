@@ -31,45 +31,48 @@ async function getReviewsById(params: any) {
 }
 
 async function updateReview(callPath: any, args: any) {
-  const userId = callPath["userIds"][0];
+  const userId = this.userId;
 
-  if (this.userId == null || this.userId !== Number(userId)) {
+  if (userId == null) {
     throw new Error("not authorized");
   }
 
-  const review = args[0];
+  console.log("updateReview", userId, args);
+
+  const review = { userId, ...args[0] };
   const reviewsLengthBefore = await findReviewsCountByUserId(userId);
   const result = await addOrUpdateReview(review);
   const reviews = await findReviewsByUserId(userId);
+  console.log(result, reviews);
   const reviewsLength = reviews.length;
   const isAdd = reviewsLength - reviewsLengthBefore === 1;
   const results: any[] = [];
 
   if (isAdd) {
     results.push({
-      path: ["usersById", userId, "reviews", reviewsLength - 1],
+      path: ["userReviews", reviewsLength - 1],
       value: $ref(["reviewsById", result.id])
     }, {
-      path: ["usersById", userId, "reviews", "lastUpdatedIndex"],
+      path: ["userReviews", "lastUpdatedIndex"],
       value: reviewsLength - 1
     });
   } else {
     const index = reviews.map((review) => review.id).indexOf(result.id);
 
     results.push({
-      path: ["usersById", userId, "reviews", index],
+      path: ["userReviews", index],
       value: $ref(["reviewsById", result.id])
     }, {
-      path: ["usersById", userId, "reviews", "lastUpdatedIndex"],
+      path: ["userReviews", "lastUpdatedIndex"],
       value: index
     });
   }
 
   results.push({
-    path: ["usersById", userId, "reviews", {to: reviewsLength}],
+    path: ["userReviews", {to: reviewsLength}],
     invalidated: true
   }, {
-    path: ["usersById", userId, "reviews", "length"],
+    path: ["userReviews", "length"],
     value: reviewsLength
   });
 
@@ -150,7 +153,7 @@ export default [
     get: getReviewsById
   },
   {
-    route: "usersById[{integers:userIds}].updateReview",
+    route: "updateReview",
     call: updateReview
   },
   {
