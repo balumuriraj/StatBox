@@ -37,13 +37,13 @@ async function updateReview(callPath: any, args: any) {
     throw new Error("not authorized");
   }
 
-  console.log("updateReview", userId, args);
+  // console.log("updateReview", userId, args);
 
   const review = { userId, ...args[0] };
   const reviewsLengthBefore = await findReviewsCountByUserId(userId);
   const result = await addOrUpdateReview(review);
   const reviews = await findReviewsByUserId(userId);
-  console.log(result, reviews);
+  // console.log(result, reviews);
   const reviewsLength = reviews.length;
   const isAdd = reviewsLength - reviewsLengthBefore === 1;
   const results: any[] = [];

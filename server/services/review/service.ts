@@ -58,6 +58,29 @@ export async function findReviewsByUserIds(userIds: number[]) {
   return await generateReviewsData(reviews);
 }
 
+export async function findReviewIdsByUserIds(userIds: number[], skip: number, limit: number) {
+  const where: any = { userId: { $in: userIds } };
+  const group: any = {
+    _id: "$userId",
+    reviewIds: { $push: { _id: "$_id" }}
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group },
+    {$project: {reviewIds: {$slice: ["$reviewIds", skip, limit] } } }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const res: any = {};
+
+  results.forEach((result) => {
+    res[result._id] = result.reviewIds.map((obj) => obj._id);
+  });
+
+  return res;
+}
+
 export async function addOrUpdateReview(review: any) {
   if (review) {
     review.timestamp = Date.now();
@@ -82,6 +105,28 @@ export async function findReviewsCountByUserId(userId: number) {
 
   const results = await ReviewModel.aggregate(query);
   return results[0] && results[0].count || 0;
+}
+
+export async function findReviewCountsByUserIds(userIds: number[]) {
+  const where: any = { userId: { $in: userIds } };
+  const group: any = {
+    _id: "$userId",
+    count: { $sum: 1 }
+  };
+
+  const query = [
+    { $match: where },
+    { $group: group }
+  ];
+
+  const results = await ReviewModel.aggregate(query);
+  const counts: any = {};
+
+  results.forEach((result) => {
+    counts[result._id] = result.count;
+  });
+
+  return counts;
 }
 
 export async function findReviewBinsByMovieId(movieId: number) {

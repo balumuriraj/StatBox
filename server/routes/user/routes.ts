@@ -1,6 +1,6 @@
 import * as jsonGraph from "falcor-json-graph";
 import { findMoviesByIds } from "../../services/movie/service";
-import { findReviewsByUserIds } from "../../services/review/service";
+import { findReviewCountsByUserIds, findReviewIdsByUserIds, findReviewsByUserIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import {
   addUserBookmark,
@@ -64,25 +64,13 @@ async function getUsersByIds(params: any) {
   return results;
 }
 
-async function getUsersReviewsByIds(params: any) {
+async function getUsersReviewsLength(params: any) {
   const { userIds } = params;
   const results: any[] = [];
-
-  const reviewsByUserIds = await findReviewsByUserIds(userIds);
+  const reviewcountsByUserIds = await findReviewCountsByUserIds(userIds);
 
   for (const userId of userIds) {
-    const reviews = reviewsByUserIds.filter((review) => review.userId === userId);
-
-    reviews.forEach((review, index) => {
-      const value = $ref(["reviewsById", review.id]);
-      value.$expires = -1000; // expires a second later
-      results.push({
-        path: ["usersById", userId, "reviews", index],
-        value
-      });
-    });
-
-    const value = $atom(reviews.length);
+    const value = $atom(reviewcountsByUserIds[userId]);
     value.$expires = 0; // expire immediately
 
     results.push({
@@ -94,7 +82,36 @@ async function getUsersReviewsByIds(params: any) {
   return results;
 }
 
-async function getUsersMetadataByIds(params: any) {
+async function getUsersReviews(params: any) {
+  const { userIds, reviewIndices } = params;
+  const key = "reviews";
+  const limit = reviewIndices.length;
+  const skip = reviewIndices[0];
+  const results: any[] = [];
+
+  const reviewIdsByUserIds = await findReviewIdsByUserIds(userIds, skip, limit);
+
+  for (const userId of userIds) {
+    const reviewIds = reviewIdsByUserIds[userId];
+
+    for (const index in reviewIndices) {
+      const reviewId = reviewIds[index];
+      const reviewIndex = reviewIndices[index];
+
+      const value = reviewId ? $ref(["reviewsById", reviewId]) : null;
+      value.$expires = -1000; // expires a second later
+      results.push({
+        path: ["usersById", userId, key, reviewIndex],
+        value
+      });
+    }
+  }
+
+  return results;
+}
+
+// TODO: Optimization
+async function getUsersMetadata(params: any) {
   const { userIds } = params;
   const keys = params[3] || ["ratingBins", "movieMinutes", "moviesCount", "topActors", "topDirectors", "genres"];
   const results: any[] = [];
@@ -309,9 +326,8 @@ async function addFavorite(callPath: any, args: any) {
   if (movieId == null) {
     throw new Error("invalid movieId");
   }
-  console.log("addFavorite", this.userId, movieId);
+  // console.log("addFavorite", this.userId, movieId);
   const user = await addUserFavorite(this.userId, movieId);
-  console.log(user);
   const favoriteLength = user.favorites.length;
 
   return [
@@ -337,9 +353,8 @@ async function removeFavorite(callPath: any, args: any) {
     throw new Error("invalid movieId");
   }
 
-  console.log("removeFavorite", this.userId, movieId);
+  // console.log("removeFavorite", this.userId, movieId);
   const user = await removeUserFavorite(this.userId, movieId);
-  console.log(user);
   const index = user.favorites.indexOf(movieId);
   const favoriteLength = user.favorites.length;
 
@@ -361,12 +376,16 @@ export default [
     get: getUsersByIds
   },
   {
-    route: "usersById[{integers:userIds}].reviews",
-    get: getUsersReviewsByIds
+    route: "usersById[{integers:userIds}].reviews.length",
+    get: getUsersReviewsLength
+  },
+  {
+    route: "usersById[{integers:userIds}].reviews[{integers:reviewIndices}]",
+    get: getUsersReviews
   },
   {
     route: "usersById[{integers:userIds}].metadata['genres','ratingBins','movieMinutes','moviesCount','topDirectors','topActors']",
-    get: getUsersMetadataByIds
+    get: getUsersMetadata
   },
   {
     route: "addBookmark",
