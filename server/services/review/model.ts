@@ -36,19 +36,19 @@ Review.schema.path("rating").validate((value) => {
 }, "Invalid rating value");
 
 Review.schema.path("watchWith").validate((value) => {
-  return /friends|self|family/i.test(value);
+  return /friends|self|family/i.test(value) || value === null;
 }, "Invalid watchWith value");
 
 Review.schema.path("pace").validate((value) => {
-  return /slow|fast/i.test(value);
+  return /slow|fast/i.test(value) || value === null;
 }, "Invalid pace value");
 
 Review.schema.path("rewatch").validate((value) => {
-  return /yes|no/i.test(value);
+  return /yes|no/i.test(value) || value === null;
 }, "Invalid rewatch value");
 
 Review.schema.path("story").validate((value) => {
-  return /simple|complex/i.test(value);
+  return /simple|complex/i.test(value) || value === null;
 }, "Invalid story value");
 
 export class ReviewModel {

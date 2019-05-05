@@ -12,6 +12,7 @@ import {
 
 const $ref = jsonGraph.ref;
 const $atom = jsonGraph.atom;
+const $error = jsonGraph.error;
 
 const sortFunc = (a, b) => b.rating - a.rating;
 
@@ -265,7 +266,10 @@ async function getUsersMetadata(params: any) {
 
 async function addBookmark(callPath: any, args: any) {
   if (this.userId == null) {
-    throw new Error("not authorized");
+    return [{
+      path: ["userBookmarks", "error"],
+      value: $error("Not Authorized")
+    }];
   }
 
   const movieId = args[0];
@@ -291,7 +295,10 @@ async function addBookmark(callPath: any, args: any) {
 
 async function removeBookmark(callPath: any, args: any) {
   if (this.userId == null) {
-    throw new Error("not authorized");
+    return [{
+      path: ["userBookmarks", "error"],
+      value: $error("Not Authorized")
+    }];
   }
 
   const movieId = args[0];
@@ -318,7 +325,10 @@ async function removeBookmark(callPath: any, args: any) {
 
 async function addFavorite(callPath: any, args: any) {
   if (this.userId == null) {
-    throw new Error("not authorized");
+    return [{
+      path: ["userFavorites", "error"],
+      value: $error("Not Authorized")
+    }];
   }
 
   const movieId = args[0];
@@ -344,7 +354,10 @@ async function addFavorite(callPath: any, args: any) {
 
 async function removeFavorite(callPath: any, args: any) {
   if (this.userId == null) {
-    throw new Error("not authorized");
+    return [{
+      path: ["userFavorites", "error"],
+      value: $error("Not Authorized")
+    }];
   }
 
   const movieId = args[0];

@@ -34,7 +34,13 @@ async function updateReview(callPath: any, args: any) {
   const userId = this.userId;
 
   if (userId == null) {
-    throw new Error("not authorized");
+    return [{
+      path: ["userReviews", 1],
+      value: {
+        $type: "error",
+        value: "Not Authorized"
+      }
+    }];
   }
 
   // console.log("updateReview", userId, args);
@@ -69,7 +75,7 @@ async function updateReview(callPath: any, args: any) {
   }
 
   results.push({
-    path: ["userReviews", {to: reviewsLength}],
+    path: ["userReviews", { to: reviewsLength }],
     invalidated: true
   }, {
     path: ["userReviews", "length"],
