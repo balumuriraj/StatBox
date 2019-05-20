@@ -14,8 +14,8 @@ async function getCelebsByIds(params: any) {
 
       if (key === "dob") {
         const dateStr = celeb[key];
-        const date = new Date(dateStr);
-        value = dateFormat(date, "mediumDate");
+        const date = dateStr && new Date(dateStr);
+        value = (date && dateFormat(date, "mediumDate")) || null;
       }
 
       results.push({

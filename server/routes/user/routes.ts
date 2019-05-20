@@ -123,7 +123,18 @@ async function getUsersMetadata(params: any) {
     const reviews = reviewsByUserIds.filter((review) => review.userId === userId);
     const ratingsByMovieId = {};
     const movieIds = [];
-    const ratingBins = {};
+    const ratingBins = {
+      0.5: 0,
+      1: 0,
+      1.5: 0,
+      2: 0,
+      2.5: 0,
+      3: 0,
+      3.5: 0,
+      4: 0,
+      4.5: 0,
+      5: 0
+    };
 
     reviews.forEach((review) => {
       ratingsByMovieId[review.movieId] = review.rating;
@@ -186,7 +197,7 @@ async function getUsersMetadata(params: any) {
     const directors = [];
     const actors = [];
 
-    for ( const celebId in ratingsByCastId) {
+    for (const celebId in ratingsByCastId) {
       const ratingsOfCeleb = ratingsByCastId[celebId];
 
       actors.push({
@@ -195,7 +206,7 @@ async function getUsersMetadata(params: any) {
       });
     }
 
-    for ( const celebId in ratingsByCrewId) {
+    for (const celebId in ratingsByCrewId) {
       const ratingsOfCeleb = ratingsByCrewId[celebId];
 
       directors.push({

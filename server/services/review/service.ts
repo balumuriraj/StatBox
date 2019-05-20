@@ -62,13 +62,13 @@ export async function findReviewIdsByUserIds(userIds: number[], skip: number, li
   const where: any = { userId: { $in: userIds } };
   const group: any = {
     _id: "$userId",
-    reviewIds: { $push: { _id: "$_id" }}
+    reviewIds: { $push: { _id: "$_id" } }
   };
 
   const query = [
     { $match: where },
     { $group: group },
-    {$project: {reviewIds: {$slice: ["$reviewIds", skip, limit] } } }
+    { $project: { reviewIds: { $slice: ["$reviewIds", skip, limit] } } }
   ];
 
   const results = await ReviewModel.aggregate(query);
@@ -191,7 +191,18 @@ export async function findRatingBinsByMovieId(movieId: number) {
   ];
 
   const results = await ReviewModel.aggregate(query);
-  const bins = {};
+  const bins = {
+    0.5: 0,
+    1: 0,
+    1.5: 0,
+    2: 0,
+    2.5: 0,
+    3: 0,
+    3.5: 0,
+    4: 0,
+    4.5: 0,
+    5: 0
+  };
 
   if (results) {
     results.forEach((result) => {

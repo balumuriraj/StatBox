@@ -1,6 +1,6 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
-import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates } from "../../services/movie/service";
+import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates, findMoviesCountByYears } from "../../services/movie/service";
 import { findRatingBinsByMovieId, findRatingsByMovieIds, findReviewBinsByMovieId, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
@@ -198,6 +198,14 @@ async function searchMoviesByQuery(pathSet: any) {
   return results;
 }
 
+async function getMoviesCountByYears(pathSet: any) {
+  const moviesCount = await findMoviesCountByYears();
+  return [{
+    path: ["moviesCountByYears"],
+    value: $atom(moviesCount)
+  }];
+}
+
 export default [
   {
     route: "moviesById[{integers:movieIds}]",
@@ -218,5 +226,9 @@ export default [
   {
     route: "moviesSearches[{keys:queryStrings}][{integers:indices}]",
     get: searchMoviesByQuery
+  },
+  {
+    route: "moviesCountByYears",
+    get: getMoviesCountByYears
   }
 ];

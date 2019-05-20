@@ -151,3 +151,32 @@ export async function findAllMovies() {
   const movies = await MovieModel.find(query);
   return await generateMoviesData(movies);
 }
+
+export async function findMoviesCountByYears() {
+  const fields: any = {
+    year: { $year: "$releasedate" }
+  };
+  const group: any = {
+    _id: { year: "$year" },
+    count: { $sum: 1 }
+  };
+  const query = [
+    { $addFields: fields },
+    { $group: group }
+  ];
+
+  const results = await MovieModel.aggregate(query);
+  const bins = {};
+
+  if (results) {
+    results.forEach((result) => {
+      const rating = result._id.year;
+
+      if (rating) {
+        bins[rating] = result.count;
+      }
+    });
+  }
+
+  return bins;
+}
