@@ -1,6 +1,6 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
-import { findMoviesBetweenDates, findMoviesByIds, findMoviesCountBetweenDates, findMoviesCountByYears } from "../../services/movie/service";
+import { findMoviesBetweenDates, findMoviesByDate, findMoviesByFilter, findMoviesByFilterCount, findMoviesByIds, findMoviesCountBetweenDates, findMoviesCountByDate, findMoviesCountByYears } from "../../services/movie/service";
 import { findRatingBinsByMovieId, findRatingsByMovieIds, findReviewBinsByMovieId, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
@@ -206,6 +206,114 @@ async function getMoviesCountByYears(pathSet: any) {
   }];
 }
 
+async function getMoviesByYearsCount(pathSet: any) {
+  const { years } = pathSet;
+  const results = [];
+
+  for (const year of years) {
+    const moviesCount = await findMoviesCountByDate([year]);
+
+    return [{
+      path: ["moviesByYear", year, "length"],
+      value: $atom(moviesCount)
+    }];
+  }
+
+  return results;
+}
+
+async function getMoviesByYears(pathSet: any) {
+  const { years, indices } = pathSet;
+  const results = [];
+
+  for (const year of years) {
+    const limit = indices.length;
+    const skip = indices[0];
+    const movies = await findMoviesByDate([year], limit, skip);
+
+    for (let i = 0; i < movies.length; i++) {
+      const index = indices[i];
+      const movie = movies[i];
+
+      let value: any = null;
+      const movieId = movie.id;
+
+      if (movieId) {
+        value = $ref(["moviesById", movieId]);
+      }
+
+      results.push({
+        path: ["moviesByYear", year, index],
+        value
+      });
+    }
+  }
+
+  return results;
+}
+
+async function getMoviesByFiltersCount(pathSet: any) {
+  const { filters } = pathSet;
+  const prop = pathSet[2] || "length";
+  const query: any = {};
+  const results = [];
+
+  for (const filter of filters) {
+    filter.split("&").forEach((str) => {
+      const arr = str.split("=");
+      query[arr[0]] = arr[1].split(",").filter(Boolean);
+    });
+
+    const moviesCount = await findMoviesByFilterCount(query.genres, query.years.map(Number));
+    console.log("moviesCount", moviesCount);
+
+    results.push({
+      path: ["moviesByFilter", filter, prop],
+      value: moviesCount
+    });
+  }
+
+  return results;
+}
+
+
+async function getMoviesByFilters(pathSet: any) {
+  const { filters, indices } = pathSet;
+  const query: any = {};
+  const results = [];
+
+  for (const filter of filters) {
+    filter.split("&").forEach((str) => {
+      const arr = str.split("=");
+      query[arr[0]] = arr[1].split(",").filter(Boolean);
+    });
+
+    const limit = indices.length;
+    const skip = indices[0];
+    console.log(query);
+    const movieIds = await findMoviesByFilter(query.genres, query.years.map(Number), query.sortBy[0], limit, skip);
+    console.log("movieIds: ", movieIds);
+
+    for (let i = 0; i < movieIds.length; i++) {
+      const index = indices[i];
+      const movieId = movieIds[i];
+
+      let value: any = null;
+
+      if (movieId) {
+        value = $ref(["moviesById", movieId]);
+      }
+
+      results.push({
+        path: ["moviesByFilter", filter, index],
+        value
+      });
+    }
+  }
+
+  return results;
+}
+
 export default [
   {
     route: "moviesById[{integers:movieIds}]",
@@ -230,5 +338,21 @@ export default [
   {
     route: "moviesCountByYears",
     get: getMoviesCountByYears
+  },
+  {
+    route: "moviesByYear[{integers:years}].length",
+    get: getMoviesByYearsCount
+  },
+  {
+    route: "moviesByYear[{integers:years}][{integers:indices}]",
+    get: getMoviesByYears
+  },
+  {
+    route: "moviesByFilter[{keys:filters}].length",
+    get: getMoviesByFiltersCount
+  },
+  {
+    route: "moviesByFilter[{keys:filters}][{integers:indices}]",
+    get: getMoviesByFilters
   }
 ];

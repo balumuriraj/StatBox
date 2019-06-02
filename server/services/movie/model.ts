@@ -81,7 +81,7 @@ export class MovieModel {
 
   static aggregate(query: any): Promise<any[]> {
     return new Promise<any[]>((resolve, reject) => {
-      Movie.aggregate(query, (err: any, result: any[]) => {
+      Movie.aggregate(query).allowDiskUse(true).exec((err: any, result: any[]) => {
         if (err) {
           reject(err);
         }

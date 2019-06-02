@@ -30,7 +30,8 @@ export async function findMoviesByIds(ids: number[]) {
   return await generateMoviesData(movies);
 }
 
-export async function findMoviesCountByDate(year: number, month?: number, day?: number) {
+export async function findMoviesCountByDate(date: number[]) {
+  const [year, month, day] = date;
   const fields: any = {
     year: { $year: "$releasedate" }
   };
@@ -59,10 +60,11 @@ export async function findMoviesCountByDate(year: number, month?: number, day?: 
   ];
 
   const results = await MovieModel.aggregate(query);
-  return results;
+  return results[0].count;
 }
 
-export async function findMoviesByDate(year: number, month?: number, day?: number) {
+export async function findMoviesByDate(date: number[], limit: number, skip: number) {
+  const [year, month, day] = date;
   const fields: any = {
     year: { $year: "$releasedate" }
   };
@@ -80,7 +82,10 @@ export async function findMoviesByDate(year: number, month?: number, day?: numbe
 
   const query = [
     { $addFields: fields },
-    { $match: where }
+    { $match: where },
+    { $sort: { releasedate: -1 } },
+    { $limit: skip + limit },
+    { $skip: skip }
   ];
   const movies = await MovieModel.aggregate(query);
   return await generateMoviesData(movies);
@@ -122,7 +127,7 @@ export async function findMoviesBetweenDates(date1: any, date2: any, limit: numb
 export async function sortMovieIds(ids: number[], sortBy: string, limit: number, skip: number) {
   const query = [
     {
-      _id : { $in : ids }
+      _id: { $in: ids }
     },
     {
       _id: 1
@@ -180,3 +185,160 @@ export async function findMoviesCountByYears() {
 
   return bins;
 }
+
+export async function findMoviesByFilterCount(genres: number[], years: number[]) {
+  const query: any = [];
+
+  if (years && years.length) {
+    query.push(
+      {
+        $project: {
+          year: {
+            $year: "$releasedate"
+          },
+          genre: 1,
+          releasedate: 1,
+          title: 1
+        }
+      }, {
+        $match: {
+          year: {
+            $in: years
+          }
+        }
+      }
+    );
+  }
+
+  if (genres && genres.length) {
+    query.push(
+      {
+        $match: {
+          genre: {
+            $elemMatch: { $in: genres }
+          }
+        }
+      }
+    );
+  }
+
+  query.push({
+    $count: "count"
+  });
+
+  const results = await MovieModel.aggregate(query);
+  return results[0].count;
+}
+
+export async function findMoviesByFilter(genres: string[], years: number[], sortBy: string, limit?: number, skip?: number): Promise<any> {
+  const query: any = [];
+
+  if (years && years.length) {
+    query.push(
+      {
+        $project: {
+          year: {
+            $year: "$releasedate"
+          },
+          genre: 1,
+          releasedate: 1,
+          title: 1
+        }
+      }, {
+        $match: {
+          year: {
+            $in: years
+          }
+        }
+      }
+    );
+  }
+
+  // TODO: use $and
+
+  if (genres && genres.length) {
+    query.push(
+      {
+        $match: {
+          genre: {
+            $elemMatch: { $in: genres }
+          }
+        }
+      }
+    );
+  }
+
+  if (sortBy) {
+    const sort: any = {};
+    sort[sortBy] = 1; // ascending order
+
+    query.push({
+      $sort: sort
+    });
+  } else {
+    query.push({
+      $sort: { releasedate: -1 }
+    });
+  }
+
+  query.push(
+    {
+      $project: {
+        _id: 1
+      }
+    }
+  );
+
+  if (skip) {
+    query.push({
+      $skip: skip
+    });
+  }
+
+  if (limit) {
+    query.push({
+      $limit: limit
+    });
+  }
+
+  const movieIds = await MovieModel.aggregate(query);
+  return movieIds.map(({ _id }) => _id);
+}
+
+// {
+//   $unwind: {
+//     path: "$genre"
+//   }
+// }, {
+//   $lookup: {
+//     from: "Genres",
+//     localField: "genre",
+//     foreignField: "name",
+//     as: "genres_docs"
+//   }
+// }, {
+//   $project: {
+//     genreId: "$genres_docs._id"
+//   }
+// }, {
+//   $match: {
+//     genreId: {
+//       $in: genreIds
+//     }
+//   }
+// }, {
+//   $group: {
+//     _id: null,
+//     movieIds: {
+//       $addToSet: "$_id"
+//     }
+//   }
+// }, {
+//   $unwind: {
+//     path: "$movieIds"
+//   }
+// }, {
+//   $project: {
+//     _id: "$movieIds"
+//   }
+// }
