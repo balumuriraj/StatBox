@@ -269,12 +269,35 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
   }
 
   if (sortBy) {
-    const sort: any = {};
-    sort[sortBy] = 1; // ascending order
+    if (sortBy === "popularity") {
+      query.push(
+        {
+          $lookup: {
+            from: "Reviews",
+            localField: "_id",
+            foreignField: "movieId",
+            as: "reviews"
+          }
+        }, {
+          $project: {
+            rating: {
+              $avg: "$reviews.rating"
+            }
+          }
+        }, {
+          $sort: {
+            rating: -1
+          }
+        }
+      );
+    } else {
+      const sort: any = {};
+      sort[sortBy] = 1; // ascending order
 
-    query.push({
-      $sort: sort
-    });
+      query.push({
+        $sort: sort
+      });
+    }
   } else {
     query.push({
       $sort: { releasedate: -1 }
