@@ -280,6 +280,27 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
           }
         }, {
           $project: {
+            reviewsCount: {
+              $size: "$reviews"
+            }
+          }
+        }, {
+          $sort: {
+            reviewsCount: -1
+          }
+        }
+      );
+    } else if (sortBy === "rating") {
+      query.push(
+        {
+          $lookup: {
+            from: "Reviews",
+            localField: "_id",
+            foreignField: "movieId",
+            as: "reviews"
+          }
+        }, {
+          $project: {
             rating: {
               $avg: "$reviews.rating"
             }
