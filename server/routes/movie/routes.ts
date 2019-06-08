@@ -1,7 +1,7 @@
 import * as dateFormat from "dateformat";
 import * as jsonGraph from "falcor-json-graph";
 import { findMoviesBetweenDates, findMoviesByDate, findMoviesByFilter, findMoviesByFilterCount, findMoviesByIds, findMoviesCountBetweenDates, findMoviesCountByDate, findMoviesCountByYears } from "../../services/movie/service";
-import { findRatingBinsByMovieId, findRatingsByMovieIds, findReviewBinsByMovieId, findUserReviewsByMovieIds } from "../../services/review/service";
+import { findRatingBinsByMovieId, findReviewBinsByMovieId, findUserReviewsByMovieIds } from "../../services/review/service";
 import { findRolesByMovieIds } from "../../services/role/service";
 import { findUserById } from "../../services/user/service";
 
@@ -13,16 +13,9 @@ async function getMoviesByIds(pathSet: any) {
   const results: any[] = [];
   const props = pathSet[2] ||
     ["id", "title", "cert", "releaseDate", "poster", "runtime", "genre", "rating", "ratingsCount"];
+  const movies = await findMoviesByIds(movieIds, props.indexOf("rating") > -1);
 
-  const movies = await findMoviesByIds(movieIds);
-
-  let ratingsByMovieIds = {};
-
-  if (props.indexOf("rating") > -1) {
-    ratingsByMovieIds = await findRatingsByMovieIds(movieIds);
-  }
-
-  movies.forEach((movie) => {
+  for (const movie of movies) {
     const movieId = movie.id;
 
     for (const prop of props) {
@@ -35,9 +28,9 @@ async function getMoviesByIds(pathSet: any) {
       } else if (prop === "genre") {
         value = $atom(value);
       } else if (prop === "rating") {
-        value = ratingsByMovieIds[movieId] && ratingsByMovieIds[movieId].rating;
+        value = movie.rating;
       } else if (prop === "ratingsCount") {
-        value = ratingsByMovieIds[movieId] && ratingsByMovieIds[movieId].count;
+        value = movie.ratingsCount;
       }
 
       results.push({
@@ -45,7 +38,7 @@ async function getMoviesByIds(pathSet: any) {
         value: value || null
       });
     }
-  });
+  }
 
   return results;
 }
@@ -265,7 +258,6 @@ async function getMoviesByFiltersCount(pathSet: any) {
     });
 
     const moviesCount = await findMoviesByFilterCount(query.genres, query.years.map(Number));
-    console.log("moviesCount", moviesCount);
 
     results.push({
       path: ["moviesByFilter", filter, prop],
@@ -290,9 +282,8 @@ async function getMoviesByFilters(pathSet: any) {
 
     const limit = indices.length;
     const skip = indices[0];
-    console.log(query);
     const movieIds = await findMoviesByFilter(query.genres, query.years.map(Number), query.sortBy[0], limit, skip);
-    console.log("movieIds: ", movieIds);
+    console.log("skip: ", skip, " limit: ", limit, "movieIds: ", movieIds);
 
     for (let i = 0; i < movieIds.length; i++) {
       const index = indices[i];

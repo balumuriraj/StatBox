@@ -11,7 +11,7 @@ async function generateMoviesData(movies: IMovie[]) {
   return result;
 }
 
-async function generateMovieData(movie: IMovie) {
+async function generateMovieData(movie: any) {
   return {
     id: movie._id,
     title: movie.title,
@@ -20,14 +20,43 @@ async function generateMovieData(movie: IMovie) {
     poster: movie.poster,
     genre: movie.genre,
     runtime: movie.runtime,
-    releasedate: movie.releasedate
+    releasedate: movie.releasedate,
+    rating: movie.rating,
+    ratingsCount: movie.ratingsCount
   };
 }
 
-export async function findMoviesByIds(ids: number[]) {
-  const query = [{ _id: { $in: ids } }];
-  const movies = await MovieModel.find(query);
-  return await generateMoviesData(movies);
+export async function findMoviesByIds(ids: number[], includeRating: boolean = false) {
+  if (!includeRating) {
+    const query = [{ _id: { $in: ids } }];
+    const movies = await MovieModel.find(query);
+    return await generateMoviesData(movies);
+  } else {
+    const where = { _id: { $in: ids } };
+    const lookup = {
+      from: "Reviews",
+      localField: "_id",
+      foreignField: "movieId",
+      as: "reviews"
+    };
+    const project = {
+      genre: "$genre",
+      title: "$title",
+      cert: "$cert",
+      poster: "$poster",
+      runtime: "$runtime",
+      releasedate: "$releasedate",
+      rating: { $avg: "$reviews.rating" },
+      ratingsCount: { $size: "$reviews" }
+    };
+    const query = [
+      { $match: where },
+      { $lookup: lookup },
+      { $project: project }
+    ];
+    const results = await MovieModel.aggregate(query);
+    return await generateMoviesData(results);
+  }
 }
 
 export async function findMoviesCountByDate(date: number[]) {
@@ -286,7 +315,7 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
           }
         }, {
           $sort: {
-            reviewsCount: -1
+            reviewsCount: -1, releasedate: -1, title: 1, _id: 1
           }
         }
       );
@@ -307,13 +336,14 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
           }
         }, {
           $sort: {
-            rating: -1
+            rating: -1, releasedate: -1, title: 1, _id: 1
           }
         }
       );
     } else {
       const sort: any = {};
       sort[sortBy] = 1; // ascending order
+      sort["_id"] = 1;
 
       query.push({
         $sort: sort
@@ -321,7 +351,7 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
     }
   } else {
     query.push({
-      $sort: { releasedate: -1 }
+      $sort: { releasedate: -1, title: 1, _id: 1 }
     });
   }
 
