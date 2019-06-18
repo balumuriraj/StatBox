@@ -29,6 +29,8 @@ class App {
     this.express.use(helmet());
     this.express.use(bodyParser.json());
     this.express.use(bodyParser.urlencoded({ extended: true }));
+    // TODO: Add creds
+    // this.express.use("/admin", express.static("client"));
   }
 
   // Configure API endpoints.

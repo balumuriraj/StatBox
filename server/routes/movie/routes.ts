@@ -283,7 +283,7 @@ async function getMoviesByFilters(pathSet: any) {
     const limit = indices.length;
     const skip = indices[0];
     const movieIds = await findMoviesByFilter(query.genres, query.years.map(Number), query.sortBy[0], limit, skip);
-    console.log("skip: ", skip, " limit: ", limit, "movieIds: ", movieIds);
+    // console.log("skip: ", skip, " limit: ", limit, "movieIds: ", movieIds);
 
     for (let i = 0; i < movieIds.length; i++) {
       const index = indices[i];

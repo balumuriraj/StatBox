@@ -4,10 +4,11 @@ import criticRoutes from "./critic/routes";
 import criticReviewRoutes from "./criticReview/routes";
 import genreRoutes from "./genre/routes";
 import movieRoutes from "./movie/routes";
+import pollRoutes from "./poll/routes";
 import reviewRoutes from "./review/routes";
 import roleRoutes from "./role/routes";
 import userRoutes from "./user/routes";
-
+import voteRoutes from "./vote/routes";
 
 /*
 {
@@ -63,12 +64,14 @@ import userRoutes from "./user/routes";
 const BaseRouter = Router.createClass([
   ...movieRoutes,
   ...criticReviewRoutes,
+  ...pollRoutes,
   ...celebRoutes,
   ...roleRoutes,
   ...criticRoutes,
   ...genreRoutes,
   ...userRoutes,
-  ...reviewRoutes
+  ...reviewRoutes,
+  ...voteRoutes
 ]);
 
 class FalcorRouter extends BaseRouter {
