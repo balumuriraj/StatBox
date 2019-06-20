@@ -68,6 +68,30 @@ export class ReviewModel {
     });
   }
 
+  static deleteMany(query: any): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      Review.deleteMany(query, (err: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  static deleteOne(query: any): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      Review.deleteOne(query, (err: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
+  }
+
   static update(query: any, update: any): Promise<IReview> {
     const options =  {upsert: true, new: true, runValidators: true };
 

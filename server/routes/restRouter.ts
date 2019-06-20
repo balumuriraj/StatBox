@@ -1,7 +1,9 @@
 import * as express from "express";
 import { findMoviesByTerm } from "../services/movie/service";
 import { createPoll } from "../services/poll/service";
-import { findOrCreateUser } from "../services/user/service";
+import { removeUserReviews } from "../services/review/service";
+import { findOrCreateUser, removeUser } from "../services/user/service";
+import { removeUserVotes } from "../services/vote/service";
 
 const router = express.Router();
 
@@ -15,6 +17,20 @@ router.route("/getUserId")
       userId = await findOrCreateUser(req.body.authId);
     }
     res.send({ status: "success", userId });
+  });
+
+router.route("/deleteAccount")
+  .get(async (req, res) => {
+    const userId = req.body.userId;
+
+    if (userId) {
+      await removeUserVotes(userId);
+      await removeUserReviews(userId);
+      await removeUser(userId);
+      res.send({ status: "success", userId });
+    } else {
+      res.send({ status: "failure", message: "User not found!" });
+    }
   });
 
 router.route("/search")

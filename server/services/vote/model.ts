@@ -36,7 +36,19 @@ export class VoteModel {
     });
   }
 
-  static delete(query: any): Promise<number> {
+  static deleteMany(query: any): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      Vote.deleteMany(query, (err: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  static deleteOne(query: any): Promise<number> {
     return new Promise<number>((resolve, reject) => {
       Vote.deleteOne(query, (err: any) => {
         if (err) {

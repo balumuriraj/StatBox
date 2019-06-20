@@ -24,6 +24,10 @@ async function generateReviewData(review: IReview) {
   };
 }
 
+export async function removeUserReviews(userId: number) {
+  return await ReviewModel.deleteMany({ userId });
+}
+
 export async function findReviewsByIds(ids: number[]) {
   const query = { _id: { $in: ids } };
   const reviews = await ReviewModel.find(query);

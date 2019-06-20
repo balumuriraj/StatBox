@@ -36,6 +36,30 @@ export class UserModel {
     });
   }
 
+  static deleteMany(query: any): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      User.deleteMany(query, (err: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  static deleteOne(query: any): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      User.deleteOne(query, (err: any) => {
+        if (err) {
+          reject(err);
+        }
+
+        resolve();
+      });
+    });
+  }
+
   static update(id: number, update: any): Promise<IUser> {
     return new Promise<IUser>((resolve, reject) => {
       User.findByIdAndUpdate(id, update, {new: true}, (err: any, result: IUser) => {

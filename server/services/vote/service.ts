@@ -5,7 +5,11 @@ export async function saveVote(vote: any) {
 }
 
 export async function removeVote(vote: any) {
-  return await VoteModel.delete(vote);
+  return await VoteModel.deleteOne(vote);
+}
+
+export async function removeUserVotes(userId: number) {
+  return await VoteModel.deleteMany({ userId });
 }
 
 export async function findVotesByPollIds(pollIds: number[], limit: number, skip: number) {

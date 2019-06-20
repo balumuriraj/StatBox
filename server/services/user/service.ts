@@ -20,6 +20,10 @@ function generateUserData(user: IUser) {
   };
 }
 
+export async function removeUser(userId: number) {
+  return await UserModel.deleteOne({ _id: userId });
+}
+
 export async function findOrCreateUser(authId: string) {
   return await UserModel.findOneOrUpdate({ authId });
 }
