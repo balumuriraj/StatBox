@@ -1,83 +1,54 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IGenre extends Document {
+  genreId: number;
   name: string;
   movieIds: [number];
 }
 
 const genreSchema = new Schema({
+  genreId: Number,
   name: String,
   movieIds: [Number]
 });
-
-genreSchema.plugin(autoIncrement.plugin, { model: "Genre", startAt: 1 });
+genreSchema.index({genreId: 1}, {unique: true});
+genreSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Genre", field: "genreId" });
+  (this as any).genreId = result.count;
+  next();
+});
 
 const Genre = mongoose.model<IGenre>("Genre", genreSchema, "Genres");
 
 export class GenreModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IGenre> {
     const model = new Genre(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IGenre) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static update(id: number, update: any): Promise<IGenre> {
-    return new Promise<IGenre>((resolve, reject) => {
-      Genre.findByIdAndUpdate(id, update, (err: any, result: IGenre) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async updateMany(query: any, update: any): Promise<IGenre[]> {
+    return Genre.updateMany(query, update).exec();
   }
 
-  static find(query: any = {}): Promise<IGenre[]> {
-    return new Promise<IGenre[]>((resolve, reject) => {
-      Genre.find(query, (err: any, result: IGenre[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async findByIdAndUpdate(genreId: number, update: any): Promise<IGenre> {
+    const options = { upsert: true, returnNewDocument: true, new: true };
+    return Genre.findOneAndUpdate({ genreId }, update, options).exec();
   }
 
-  static findById(id: number): Promise<IGenre> {
-    return new Promise<IGenre>((resolve, reject) => {
-      Genre.findById(id, (err: any, result: IGenre) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IGenre[]> {
+    return Genre.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      Genre.aggregate(query, (err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async findById(genreId: number): Promise<IGenre> {
+    return Genre.findOne({ genreId }).exec();
+  }
 
-        resolve(result);
-      });
-    });
+  static async aggregate(query: any): Promise<any[]> {
+    return Genre.aggregate(query).exec();
   }
 }
 

@@ -1,14 +1,10 @@
 import * as md5 from "js-md5";
 import { JSDOM } from "jsdom";
-import { CelebModel } from "../services/celeb/model";
-import { GenreModel } from "../services/genre/model";
-import { MovieModel } from "../services/movie/model";
-import { RoleModel } from "../services/role/model";
-
-const numYears = 1; //8
-const startYear = 2000;
-const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
-// const months = ["november"];
+import { createCeleb, findCelebsByQuery } from "../services/celeb/service";
+import { createGenre, findGenresByQuery, updateGenre } from "../services/genre/service";
+import { createMeta } from "../services/meta/service";
+import { createMovie, findMoviesByQuery } from "../services/movie/service";
+import { createRole, findRolesByQuery } from "../services/role/service";
 
 async function performScrapeRequest(url: string) {
   console.log(url);
@@ -24,13 +20,21 @@ async function performScrapeRequest(url: string) {
 async function updateMovie(movie: IMovie) {
   const { url } = movie;
   const dom: any = await performScrapeRequest(url);
+
+  const posterBlock = dom.getElementsByClassName("filmibeat-db-movieleftcol")[0];
+  const imgElm = posterBlock.getElementsByTagName("img")[0];
+  const poster = imgElm.src;
+  movie.poster = poster && poster.indexOf("noimage") === -1 ? poster : null;
+
   const mainBlock = dom.getElementsByClassName("filmibeat-db-movierightcol")[0];
 
   if (!mainBlock) {
     return;
   }
 
-  const titleBlock = mainBlock.children[0];
+  const titleBlock = mainBlock.getElementsByClassName("filmibeat-db-headwrapper")[0];
+  const titleElm = titleBlock.getElementsByClassName("filmibeat-db-mainheading")[0];
+  movie.name = titleElm.textContent.trim();
 
   if (titleBlock && titleBlock.children.length === 3) {
     let cert = titleBlock.children[1].textContent;
@@ -80,21 +84,21 @@ async function updateMovie(movie: IMovie) {
 
   const rightBlock = childBlocks[1];
   const dateBlock = rightBlock.getElementsByClassName("filmibeat-db-normaltext")[0] as any;
-  movie.releasedate = new Date(dateBlock.innerHTML.trim());
+  movie.releaseDate = new Date(dateBlock.innerHTML.trim());
 
   // Cast and Crew
   const castCrewLink = url.split(".html")[0] + "/cast-crew.html";
   const castCrewDOM: any = await performScrapeRequest(castCrewLink);
 
   const castList = castCrewDOM && castCrewDOM.getElementsByClassName("filmibeat-db-cast-content")[0].children[0].children;
-  const cast: ICeleb[] = [];
+  const cast: IRole[] = [];
   if (castList && castList.length) {
     for (let index = 0; index < castList.length; index++) {
       const celebUrl = castList[index].children[0].href.trim();
       const castDOM: any = await performScrapeRequest(celebUrl);
 
       if (castDOM) {
-        const celeb: ICeleb = {
+        const celeb: IRole = {
           name: null,
           url: null,
           photo: null,
@@ -131,7 +135,7 @@ async function updateMovie(movie: IMovie) {
       const type = typeElm && typeElm.textContent.trim();
 
       if (crewDOM) {
-        const celeb: ICeleb = {
+        const celeb: IRole = {
           name: null,
           url: null,
           photo: null,
@@ -159,35 +163,35 @@ async function updateMovie(movie: IMovie) {
 
 async function getMovies(dom: HTMLDocument) {
   const movies: IMovie[] = [];
-  const moviesLists = dom.getElementsByClassName("filmibeat-upcoming-movies-lists");
+  const moviesLists = dom.getElementsByClassName("movies-list");
 
   for (const moviesList of moviesLists) {
-    const list = moviesList.getElementsByTagName("li");
+    const list = moviesList.getElementsByClassName("movie-img-block");
 
     for (const elem of list) {
       const movie: IMovie = {
         name: null,
-        // description: null,
+        description: null,
         cert: null,
         url: null,
         poster: null,
         runtime: null,
-        releasedate: null,
+        releaseDate: null,
         genre: [],
         cast: [],
         crew: []
       };
 
-      const imgBlock = elem.children[0];
-      const anchor = imgBlock && imgBlock.children[0] as any;
-
+      const anchor = elem && elem.children[0] as any;
       movie.url = anchor && anchor.href.trim();
-      movie.poster = anchor && anchor.children[0].src.trim();
-      movie.name = anchor && anchor.children[0].title.trim();
+
+      // const poster = anchor && anchor.children[0].src.trim();
+      // movie.poster = poster && poster.indexOf("noimage") === -1 ? poster : null;
+      // movie.name = anchor && anchor.children[0].title.trim();
 
       await updateMovie(movie);
 
-      console.log(movie.name, movie.releasedate);
+      console.log(movie.name, movie.releaseDate);
 
       movies.push(movie);
     }
@@ -196,112 +200,200 @@ async function getMovies(dom: HTMLDocument) {
   return movies;
 }
 
-async function createCelebAndRole(celebData: ICeleb, movieId: number) {
-  const hash = md5(celebData.url);
-  const findResult = await CelebModel.find([{ hash }]);
-
+async function createCelebAndRole(roleData: IRole, movieId: number) {
+  const hash = md5(roleData.url);
+  const findResult = await findCelebsByQuery({ hash });
   let celebId: number = null;
 
+  const celebData = {
+    name: roleData.name,
+    hash,
+    photo: roleData.photo,
+    dob: roleData.dob
+  };
+
   if (!findResult.length) {
-    celebId = await CelebModel.create({
-      name: celebData.name,
-      hash,
-      photo: celebData.photo,
-      dob: celebData.dob
-    });
+    const celeb = await createCeleb(celebData);
+    celebId = celeb.id;
   }
   else {
-    celebId = findResult[0]._id;
+    celebId = findResult[0].id;
+    // await CelebModel.update(celebId, celebData);
   }
 
-  const roleId = await RoleModel.create({
+  const data = {
     celebId, movieId,
-    index: celebData.index,
-    category: celebData.category,
-    type: celebData.type
-  });
+    index: roleData.index,
+    category: roleData.category,
+    type: roleData.type
+  };
+  const findRole = await findRolesByQuery(data);
+
+  if (!findRole.length) {
+    await createRole(data);
+  }
+
+  return celebId;
+}
+
+async function createDBForMovie(movie: IMovie, movieIds: number[], celebIds: number[]) {
+  const hash = md5(movie.url);
+  const movieData = {
+    title: movie.name,
+    cert: movie.cert,
+    poster: movie.poster,
+    genre: movie.genre,
+    runtime: movie.runtime,
+    releaseDate: movie.releaseDate,
+    hash
+  };
+  const findResult = await findMoviesByQuery({ hash });
+  let movieId: number = null;
+
+  if (!findResult.length) {
+    const movie = await createMovie(movieData);
+    movieId = movie.id;
+  }
+  else {
+    movieId = findResult[0].id;
+    // await MovieModel.update(movieId, movieData);
+  }
+
+  movieIds.push(movieId);
+
+  if (movie.genre) {
+    for (const genre of movie.genre) {
+      const findResult = await findGenresByQuery({ name: genre });
+
+      let genreId: number = null;
+
+      if (!findResult.length) {
+        const gen = await createGenre({ name: genre });
+        genreId = gen.id;
+      }
+      else {
+        genreId = findResult[0].id;
+      }
+
+      await updateGenre(genreId, { $addToSet: { movieIds: movieId } });
+    }
+  }
+
+  const castRoles = movie.cast;
+  for (const roleData of castRoles) {
+    const celebId = await createCelebAndRole(roleData, movieId);
+    celebIds.push(celebId);
+  }
+
+  const crewRoles = movie.crew;
+  for (const roleData of crewRoles) {
+    const celebId = await createCelebAndRole(roleData, movieId);
+    celebIds.push(celebId);
+  }
 }
 
 async function createDB(data: IMovie[]) {
+  const movieIds: number[] = [];
+  const celebIds: number[] = [];
+
   for (const movie of data) {
-    const movieId = await MovieModel.create({
-      title: movie.name,
-      // description: movie.description,
-      cert: movie.cert,
-      // url: movie.url,
-      poster: movie.poster,
-      genre: movie.genre,
-      runtime: movie.runtime,
-      releasedate: movie.releasedate
-    });
-
-    if (movie.genre) {
-      for (const genre of movie.genre) {
-        const findResult = await GenreModel.find({ name: genre });
-
-        let genreId: number = null;
-
-        if (!findResult.length) {
-          genreId = await GenreModel.create({
-            name: genre
-          });
-        }
-        else {
-          genreId = findResult[0]._id;
-        }
-
-        GenreModel.update(genreId, { $push: { movieIds: movieId } });
-      }
-    }
-
-    const castCelebs = movie.cast;
-    for (const celebData of castCelebs) {
-      await createCelebAndRole(celebData, movieId);
-    }
-
-    const crewCelebs = movie.crew;
-    for (const celebData of crewCelebs) {
-      await createCelebAndRole(celebData, movieId);
-    }
+    await createDBForMovie(movie, movieIds, celebIds);
   }
+
+  return { movieIds, celebIds };
 }
 
-async function initDB() {
-  const endPoint = "https://www.filmibeat.com/telugu/movies/";
+export async function createMovieFromUrl(url: string) {
   const startTime = Date.now();
 
-  for (let i = 0; i < numYears; i++) {
-    const year = startYear - i;
+  console.log("createMovieFromUrl started at", new Date(startTime).toLocaleString());
 
+  const movie: IMovie = {
+    name: null,
+    description: null,
+    cert: null,
+    url,
+    poster: null,
+    runtime: null,
+    releaseDate: null,
+    genre: [],
+    cast: [],
+    crew: []
+  };
+
+  await updateMovie(movie);
+
+  console.log(movie.name, movie.releaseDate);
+
+  const movieIds: number[] = [];
+  const celebIds: number[] = [];
+  await createDBForMovie(movie, movieIds, celebIds);
+
+  const data = {
+    movieIds: [...new Set(movieIds)],
+    celebIds: [...new Set(celebIds)],
+    years: null,
+    months: null,
+    type: "add"
+  };
+
+  await createMeta(data);
+
+  const endTime = Date.now();
+  const timeTaken = (endTime - startTime) / 60000;
+  console.log(`createMovieFromUrl completed!! TimeTaken: ${timeTaken} Mins`);
+}
+
+export async function createDatabase(years: number[], months: string[]) {
+  const endPoint = "https://www.filmibeat.com/telugu/movies/";
+  const startTime = Date.now();
+  const movieIds: number[] = [];
+  const celebIds: number[] = [];
+
+  console.log("createDatabase started at", new Date(startTime).toLocaleString());
+
+  for (const year of years) {
     for (const month of months) {
       const url = `${endPoint}${month}-${year}.html`;
       const dom: any = await performScrapeRequest(url);
       const moviesData = await getMovies(dom);
-      await createDB(moviesData);
+      console.log("creating DB...");
+
+      const res = await createDB(moviesData);
+      movieIds.push(...res.movieIds);
+      celebIds.push(...res.celebIds);
     }
   }
 
-  const endTime = Date.now();
-  const timeTaken = (endTime - startTime) / 1000;
-  console.log("database creation completed!! TimeTaken: ", timeTaken);
-}
+  const data = {
+    movieIds: [...new Set(movieIds)],
+    celebIds: [...new Set(celebIds)],
+    years,
+    months,
+    type: "add"
+  };
 
-initDB();
+  await createMeta(data);
+
+  const endTime = Date.now();
+  const timeTaken = (endTime - startTime) / 60000;
+  console.log(`createDatabase completed!! TimeTaken: ${timeTaken} Mins`);
+}
 
 interface IMovie {
   name: string;
-  // description: string;
+  description: string;
   url: string;
   poster: string;
   runtime: number;
-  releasedate: Date;
+  releaseDate: Date;
   genre: string[];
-  cast: ICeleb[];
-  crew: ICeleb[];
+  cast: IRole[];
+  crew: IRole[];
   cert: string;
 }
 
-interface ICeleb {
+interface IRole {
   name: string;
   url: string;
   photo: string;

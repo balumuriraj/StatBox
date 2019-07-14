@@ -1,81 +1,69 @@
 import { CelebModel } from "../services/celeb/model";
-import { FirebaseCounterModel } from "../services/firebaseCounter/model";
+import { findCelebsByIds } from "../services/celeb/service";
+import { findMetaById, updateMeta } from "../services/meta/service";
 import { MovieModel } from "../services/movie/model";
+import { findMoviesByIds } from "../services/movie/service";
+import { deleteImage, uploadImage } from "../support/firebaseUtils";
 
-const admin = require("firebase-admin");
-const download = require("image-downloader");
+export async function addImages(metaId: number) {
+  console.log("firebase storage push started!");
+  const startTime = Date.now();
 
-const serviceAccount = require("./serviceAccountKey.json");
+  const meta = await findMetaById(metaId);
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: "statbox89.appspot.com"
-});
+  if (!meta) {
+    return;
+  }
 
-const bucket = admin.storage().bucket();
-
-async function init() {
-  const data = await FirebaseCounterModel.find();
-  const firebaseCounter = data[0];
-  const oldMoviesCount = firebaseCounter ? firebaseCounter.moviesCount : 0;
-  const oldCelebsCount = firebaseCounter ? firebaseCounter.celebsCount : 0;
-
-  const movieRecords = await MovieModel.find([], null, null, oldMoviesCount);
-  const newMoviesCount = oldMoviesCount + movieRecords.length;
-
-  const celebRecords = await CelebModel.find([], null, null, oldCelebsCount);
-  const newCelebsCount = oldCelebsCount + celebRecords.length;
+  const movieRecords = await findMoviesByIds(meta.movieIds);
+  const celebRecords = await findCelebsByIds(meta.celebIds);
 
   for (const movie of movieRecords) {
     if (movie.poster) {
-      const poster = `images/posters/${movie.id}.jpg`;
-
-      try {
-        const { filename, image } = await download.image({ url: movie.poster, dest: poster });
-        const data = await bucket.upload(poster, { destination: poster });
-        const file = data[0];
-        const publicData = await file.makePublic();
-        const url = `https://storage.googleapis.com/statbox89.appspot.com/${poster}`;
-        console.log("url: ", url);
-        await MovieModel.update(movie.id, { $set: { poster: url } });
-      } catch (e) {
-        console.error(e);
-      }
+      const url = await uploadImage(movie.poster, `images/posters/${movie.id}.jpg`);
+      await MovieModel.update(movie.id, { $set: { poster: url } });
     }
   }
 
   for (const record of celebRecords) {
     if (record.photo) {
-      const photo = `images/photos/${record.id}.jpg`;
-      const options = {
-        url: record.photo,
-        dest: photo
-      };
-
-      try {
-        const { filename, image } = await download.image(options);
-        const bucketOptions = { destination: photo };
-        const data = await bucket.upload(photo, bucketOptions);
-        const file = data[0];
-        const publicData = await file.makePublic();
-        const url = `https://storage.googleapis.com/statbox89.appspot.com/${photo}`;
-        console.log("url: ", url);
-        await CelebModel.update(record.id, { $set: { photo: url } });
-      } catch (e) {
-        console.error(e);
-      }
+      const url = await uploadImage(record.photo, `images/photos/${record.id}.jpg`);
+      await CelebModel.update(record.id, { $set: { photo: url } });
     }
   }
 
-  console.log("moviesCount: ", newMoviesCount, " celebsCount: ", newCelebsCount);
+  const endTime = Date.now();
+  const timeTaken = (endTime - startTime) / 60000;
+  console.log(`firebase storage push completed!! TimeTaken: ${timeTaken} Mins`);
 
-  if (!firebaseCounter) {
-    await FirebaseCounterModel.create({ moviesCount: newMoviesCount, celebsCount: newCelebsCount });
-  } else {
-    await FirebaseCounterModel.update(firebaseCounter._id, { $set: { moviesCount: newMoviesCount, celebsCount: newCelebsCount } });
-  }
-
-  console.log("firebase storage push completed!");
+  return await updateMeta(meta.id, { firebaseUpdatedAt: Date.now() });
 }
 
-init();
+export async function deleteImages(metaId: number) {
+  console.log("firebase storage delete started!");
+  const startTime = Date.now();
+
+  const meta = await findMetaById(metaId);
+
+  if (!meta) {
+    return;
+  }
+
+  for (const movieId of meta.movieIds) {
+    if (movieId) {
+      await deleteImage(`images/posters/${movieId}.jpg`);
+    }
+  }
+
+  for (const celebId of meta.celebIds) {
+    if (celebId) {
+      await deleteImage(`images/photos/${celebId}.jpg`);
+    }
+  }
+
+  const endTime = Date.now();
+  const timeTaken = (endTime - startTime) / 60000;
+  console.log(`firebase storage delete completed!! TimeTaken: ${timeTaken} Mins`);
+
+  return await updateMeta(meta.id, { firebaseUpdatedAt: Date.now() });
+}

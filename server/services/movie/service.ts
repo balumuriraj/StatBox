@@ -3,49 +3,85 @@ import { IMovie, MovieModel } from "./model";
 async function generateMoviesData(movies: IMovie[]) {
   const result: any[] = [];
 
-  for (const movie of movies) {
-    const resultMovie = await generateMovieData(movie);
-    result.push(resultMovie);
+  if (movies) {
+    for (const movie of movies) {
+      const resultMovie = await generateMovieData(movie);
+      result.push(resultMovie);
+    }
   }
 
   return result;
 }
 
 async function generateMovieData(movie: any) {
-  return {
-    id: movie._id,
-    title: movie.title,
-    description: movie.description,
-    cert: movie.cert,
-    poster: movie.poster,
-    genre: movie.genre,
-    runtime: movie.runtime,
-    releasedate: movie.releasedate,
-    rating: movie.rating,
-    ratingsCount: movie.ratingsCount
-  };
+  if (movie) {
+    return {
+      id: movie.movieId,
+      algoliaId: movie.algoliaId,
+      title: movie.title,
+      description: movie.description,
+      cert: movie.cert,
+      poster: movie.poster,
+      genre: movie.genre,
+      runtime: movie.runtime,
+      releaseDate: movie.releaseDate,
+      year: movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : null,
+      rating: movie.rating,
+      ratingsCount: movie.ratingsCount
+    };
+  }
+}
+
+export async function createMovie(movie: any) {
+  const result = await MovieModel.create(movie);
+  return generateMovieData(result);
+}
+
+export async function updateMovie(movieId: number, movie: any) {
+  const result = await MovieModel.update(movieId, movie);
+  return generateMovieData(result);
+}
+
+export async function updateMovieAlgoliaIds(movieIds: number[], algoliadIds: string[]) {
+  const queries = movieIds.map((movieId) => ({ movieId }));
+  const updates = algoliadIds.map((algoliaId) => ({ $set: { algoliaId } }));
+  await MovieModel.bulkUpdate(queries, updates);
+}
+
+export async function deleteMovie(movieId: number) {
+  return await MovieModel.deleteOne(movieId);
+}
+
+export async function findMoviesCount() {
+  return MovieModel.count();
+}
+
+export async function findMovieById(movieId: number) {
+  const movie = await MovieModel.findById(movieId);
+  return await generateMovieData(movie);
 }
 
 export async function findMoviesByIds(ids: number[], includeRating: boolean = false) {
   if (!includeRating) {
-    const query = [{ _id: { $in: ids } }];
+    const query = [{ movieId: { $in: ids } }];
     const movies = await MovieModel.find(query);
     return await generateMoviesData(movies);
   } else {
-    const where = { _id: { $in: ids } };
+    const where = { movieId: { $in: ids } };
     const lookup = {
       from: "Reviews",
-      localField: "_id",
+      localField: "movieId",
       foreignField: "movieId",
       as: "reviews"
     };
     const project = {
+      movieId: "$movieId",
       genre: "$genre",
       title: "$title",
       cert: "$cert",
       poster: "$poster",
       runtime: "$runtime",
-      releasedate: "$releasedate",
+      releaseDate: "$releaseDate",
       rating: { $avg: "$reviews.rating" },
       ratingsCount: { $size: "$reviews" }
     };
@@ -62,7 +98,7 @@ export async function findMoviesByIds(ids: number[], includeRating: boolean = fa
 export async function findMoviesCountByDate(date: number[]) {
   const [year, month, day] = date;
   const fields: any = {
-    year: { $year: "$releasedate" }
+    year: { $year: "$releaseDate" }
   };
   const where: any = year && { year };
   const group: any = {
@@ -71,13 +107,13 @@ export async function findMoviesCountByDate(date: number[]) {
   };
 
   if (month) {
-    fields.month = { $month: "$releasedate" };
+    fields.month = { $month: "$releaseDate" };
     where.month = month;
     group._id.month = "$month";
   }
 
   if (day) {
-    fields.day = { $dayOfMonth: "$releasedate" };
+    fields.day = { $dayOfMonth: "$releaseDate" };
     where.day = day;
     group._id.day = "$day";
   }
@@ -95,24 +131,24 @@ export async function findMoviesCountByDate(date: number[]) {
 export async function findMoviesByDate(date: number[], limit: number, skip: number) {
   const [year, month, day] = date;
   const fields: any = {
-    year: { $year: "$releasedate" }
+    year: { $year: "$releaseDate" }
   };
   const where: any = { year };
 
   if (month) {
-    fields.month = { $month: "$releasedate" };
+    fields.month = { $month: "$releaseDate" };
     where.month = month;
   }
 
   if (day) {
-    fields.day = { $dayOfMonth: "$releasedate" };
+    fields.day = { $dayOfMonth: "$releaseDate" };
     where.day = day;
   }
 
   const query = [
     { $addFields: fields },
     { $match: where },
-    { $sort: { releasedate: -1 } },
+    { $sort: { releaseDate: -1 } },
     { $limit: skip + limit },
     { $skip: skip }
   ];
@@ -120,53 +156,20 @@ export async function findMoviesByDate(date: number[], limit: number, skip: numb
   return await generateMoviesData(movies);
 }
 
-export async function findMoviesCountBetweenDates(date1: any, date2: any) {
-  const query = [
-    {
-      $match: {
-        releasedate: {
-          $gte: new Date(date1),
-          $lt: new Date(date2)
-        }
-      }
-    },
-    { $count: "count" }
-  ];
-
-  const results = await MovieModel.aggregate(query);
-  return results && results[0] && results[0].count || 0;
-}
-
-export async function findMoviesBetweenDates(date1: any, date2: any, limit: number, skip: number) {
-  const query = [
-    {
-      releasedate: {
-        $gte: new Date(date1),
-        $lt: new Date(date2)
-      }
-    }
-  ];
-
-  const sort = { releasedate: -1 };
-
-  const movies = await MovieModel.find(query, sort, limit, skip);
-  return await generateMoviesData(movies);
-}
-
 export async function sortMovieIds(ids: number[], sortBy: string, limit: number, skip: number) {
   const query = [
     {
-      _id: { $in: ids }
+      movieId: { $in: ids }
     },
     {
-      _id: 1
+      movieId: 1
     }
   ];
   const sort = {};
   sort[sortBy] = 1; // ascending order
 
   const movies = await MovieModel.find(query, sort, limit, skip);
-  return movies.map((movie) => movie._id);
+  return movies.map((movie) => movie.movieId);
 }
 
 // Full text search
@@ -180,15 +183,14 @@ export async function findMoviesByTerm(term: string) {
   return await generateMoviesData(movies);
 }
 
-export async function findAllMovies() {
-  const query = [];
-  const movies = await MovieModel.find(query);
+export async function findMoviesByQuery(query: any) {
+  const movies = await MovieModel.find([query]);
   return await generateMoviesData(movies);
 }
 
 export async function findMoviesCountByYears() {
   const fields: any = {
-    year: { $year: "$releasedate" }
+    year: { $year: "$releaseDate" }
   };
   const group: any = {
     _id: { year: "$year" },
@@ -223,11 +225,12 @@ export async function findMoviesByFilterCount(genres: number[], years: number[])
       {
         $project: {
           year: {
-            $year: "$releasedate"
+            $year: "$releaseDate"
           },
           genre: 1,
-          releasedate: 1,
-          title: 1
+          releaseDate: 1,
+          title: 1,
+          movieId: 1
         }
       }, {
         $match: {
@@ -259,7 +262,7 @@ export async function findMoviesByFilterCount(genres: number[], years: number[])
   return results[0].count;
 }
 
-export async function findMoviesByFilter(genres: string[], years: number[], sortBy: string, limit?: number, skip?: number): Promise<any> {
+export async function findMoviesByFilter(genres: string[], years: string[], sortBy: string, limit?: number, skip?: number): Promise<any> {
   const query: any = [];
 
   if (years && years.length) {
@@ -267,11 +270,12 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
       {
         $project: {
           year: {
-            $year: "$releasedate"
+            $year: "$releaseDate"
           },
           genre: 1,
-          releasedate: 1,
-          title: 1
+          releaseDate: 1,
+          title: 1,
+          movieId: 1
         }
       }, {
         $match: {
@@ -303,7 +307,7 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
         {
           $lookup: {
             from: "Reviews",
-            localField: "_id",
+            localField: "movieId",
             foreignField: "movieId",
             as: "reviews"
           }
@@ -315,7 +319,7 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
           }
         }, {
           $sort: {
-            reviewsCount: -1, releasedate: -1, title: 1, _id: 1
+            reviewsCount: -1, releaseDate: -1, title: 1, movieId: 1
           }
         }
       );
@@ -324,7 +328,7 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
         {
           $lookup: {
             from: "Reviews",
-            localField: "_id",
+            localField: "movieId",
             foreignField: "movieId",
             as: "reviews"
           }
@@ -336,14 +340,14 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
           }
         }, {
           $sort: {
-            rating: -1, releasedate: -1, title: 1, _id: 1
+            rating: -1, releaseDate: -1, title: 1, movieId: 1
           }
         }
       );
     } else {
       const sort: any = {};
       sort[sortBy] = 1; // ascending order
-      sort["_id"] = 1;
+      sort["movieId"] = 1;
 
       query.push({
         $sort: sort
@@ -351,14 +355,14 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
     }
   } else {
     query.push({
-      $sort: { releasedate: -1, title: 1, _id: 1 }
+      $sort: { releaseDate: -1, title: 1, movieId: 1 }
     });
   }
 
   query.push(
     {
       $project: {
-        _id: 1
+        movieId: 1
       }
     }
   );
@@ -376,43 +380,6 @@ export async function findMoviesByFilter(genres: string[], years: number[], sort
   }
 
   const movieIds = await MovieModel.aggregate(query);
-  return movieIds.map(({ _id }) => _id);
+  return movieIds.map(({ movieId }) => movieId);
 }
 
-// {
-//   $unwind: {
-//     path: "$genre"
-//   }
-// }, {
-//   $lookup: {
-//     from: "Genres",
-//     localField: "genre",
-//     foreignField: "name",
-//     as: "genres_docs"
-//   }
-// }, {
-//   $project: {
-//     genreId: "$genres_docs._id"
-//   }
-// }, {
-//   $match: {
-//     genreId: {
-//       $in: genreIds
-//     }
-//   }
-// }, {
-//   $group: {
-//     _id: null,
-//     movieIds: {
-//       $addToSet: "$_id"
-//     }
-//   }
-// }, {
-//   $unwind: {
-//     path: "$movieIds"
-//   }
-// }, {
-//   $project: {
-//     _id: "$movieIds"
-//   }
-// }

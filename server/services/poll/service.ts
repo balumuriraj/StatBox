@@ -3,39 +3,56 @@ import { IPoll, PollModel } from "./model";
 async function generatePollsData(polls: IPoll[]) {
   const result: any[] = [];
 
-  for (const poll of polls) {
-    const res = await generatePollData(poll);
-    result.push(res);
+  if (polls) {
+    for (const poll of polls) {
+      const res = await generatePollData(poll);
+      result.push(res);
+    }
   }
 
   return result;
 }
 
 async function generatePollData(poll: any) {
-  return {
-    id: poll._id,
-    title: poll.title,
-    image: poll.image,
-    type: poll.type,
-    filter: poll.filter,
-    votes: poll.votes,
-    timestamp: poll.timestamp
-  };
+  if (poll) {
+    return {
+      id: poll.pollId,
+      title: poll.title,
+      image: poll.image,
+      type: poll.type,
+      filter: poll.filter,
+      timestamp: poll.timestamp
+    };
+  }
+}
+
+export async function createPoll(poll: any) {
+  const result = await PollModel.create({...poll, timestamp: Date.now()});
+  return generatePollData(result);
+}
+
+export async function updatePoll(pollId: number, poll: any) {
+  const result = await PollModel.update(pollId, poll);
+  return generatePollData(result);
+}
+
+export async function deletePoll(pollId: number) {
+  return await PollModel.deleteOne(pollId);
 }
 
 export async function findPollsCount() {
-  const query = [
-    { $count: "count" }
-  ];
+  return PollModel.count();
+}
 
-  const results = await PollModel.aggregate(query);
-  return results && results[0] && results[0].count || 0;
+export async function findPollById(pollId: number) {
+  const poll = await PollModel.findById(pollId);
+  return await generatePollData(poll);
 }
 
 export async function findPollIds(limit?: number, skip?: number) {
   const query: any[] = [{
     $project: {
-      _id: 1
+      pollId: 1
     }
   }];
 
@@ -52,15 +69,30 @@ export async function findPollIds(limit?: number, skip?: number) {
   }
 
   const pollIds = await PollModel.aggregate(query);
-  return pollIds.map(({ _id }) => _id);
+  return pollIds.map(({ pollId }) => pollId);
 }
 
 export async function findPollsByIds(ids: number[]) {
-  const query = [{ _id: { $in: ids } }];
+  const query = [{ pollId: { $in: ids } }];
   const polls = await PollModel.find(query);
   return await generatePollsData(polls);
 }
 
-export async function createPoll(obj: any) {
-  return await PollModel.create({ ...obj, timestamp: Date.now() });
+export async function findPolls(limit?: number, skip?: number): Promise<any> {
+  const query: any = [];
+
+  if (skip) {
+    query.push({
+      $skip: skip
+    });
+  }
+
+  if (limit) {
+    query.push({
+      $limit: limit
+    });
+  }
+
+  const polls = await PollModel.aggregate(query);
+  return generatePollsData(polls);
 }

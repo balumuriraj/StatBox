@@ -5,9 +5,9 @@ import * as express from "express";
 import * as falcorExpress from "falcor-express";
 import * as helmet from "helmet";
 import * as http from "http";
-import FalcorRouter from "./routes/FalcorRouter";
-import restRouter from "./routes/restRouter";
-import tokenRouter from "./routes/tokenRouter";
+import FalcorRouter from "./routes/falcor/FalcorRouter";
+import restRouter from "./routes/rest/router";
+import tokenRouter from "./routes/token/router";
 
 // Creates and configures an ExpressJS web server.
 class App {

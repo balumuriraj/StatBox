@@ -1,89 +1,68 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IPoll extends Document {
+  pollId: number;
   image: string;
   title: string;
   type: "year" | "celeb";
-  fitler: number;
+  fitler: string;
   timestamp: number;
 }
 
 const pollSchema = new Schema({
+  pollId: Number,
   image: String,
   title: String,
   type: String,
-  filter: Number,
+  filter: String,
   timestamp: Number
 });
-
-pollSchema.plugin(autoIncrement.plugin, { model: "Poll", startAt: 1 });
+pollSchema.index({pollId: 1}, {unique: true});
+pollSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Poll", field: "pollId" });
+  (this as any).pollId = result.count;
+  next();
+});
 
 const Poll = mongoose.model<IPoll>("Poll", pollSchema, "Polls");
 
 export class PollModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IPoll> {
     const model = new Poll(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IPoll) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static update(id: number, update: any): Promise<IPoll> {
-    return new Promise<IPoll>((resolve, reject) => {
-      Poll.findByIdAndUpdate(id, update, (err: any, result: IPoll) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async update(pollId: number, update: any): Promise<IPoll> {
+    const options = { upsert: true, returnNewDocument: true, new: true };
+    return Poll.findOneAndUpdate({ pollId }, update, options).exec();
   }
 
-  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IPoll[]> {
-    return new Promise<IPoll[]>((resolve, reject) => {
-      Poll.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: IPoll[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IPoll[]> {
+    return Poll.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static findById(id: number): Promise<IPoll> {
-    return new Promise<IPoll>((resolve, reject) => {
-      Poll.findById(id, (err: any, result: IPoll) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async findById(pollId: number): Promise<IPoll> {
+    return Poll.findOne({ pollId }).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      Poll.aggregate(query, (err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async aggregate(query: any): Promise<any[]> {
+    return Poll.aggregate(query).allowDiskUse(true).exec();
+  }
 
-        resolve(result);
-      });
-    });
+  static async count(query?: any): Promise<number> {
+    return Poll.countDocuments(query || {}).exec();
+  }
+
+  static async deleteMany(query: any): Promise<any> {
+    return Poll.deleteMany(query).exec();
+  }
+
+  static async deleteOne(pollId: number): Promise<any> {
+    return Poll.deleteOne({ pollId }).exec();
   }
 }
 

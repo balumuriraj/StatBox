@@ -1,138 +1,84 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IUser extends Document {
+  userId: number;
   authId: string;
   bookmarks: [number];
   favorites: [number];
 }
 
 const userSchema = new Schema({
+  userId: Number,
   authId: { type: String, unique : true },
   bookmarks: [Number],
   favorites: [Number]
 });
-
-userSchema.plugin(autoIncrement.plugin, { model: "User", startAt: 1 });
+userSchema.index({userId: 1}, {unique: true});
 userSchema.index({authId: 1}, {unique: true});
+userSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "User", field: "userId" });
+  (this as any).userId = result.count;
+  next();
+});
 
 const User = mongoose.model<IUser>("User", userSchema, "Users");
-
 
 export class UserModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IUser> {
     const model = new User(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IUser) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static deleteMany(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      User.deleteMany(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve();
-      });
-    });
+  static async updateMany(query: any, update: any): Promise<IUser[]> {
+    return User.updateMany(query, update).exec();
   }
 
-  static deleteOne(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      User.deleteOne(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve();
-      });
-    });
+  static async findOneAndUpdate(query: any, update: any): Promise<IUser> {
+    const options =  { upsert: true, returnNewDocument: true, new: true, runValidators: true };
+    return User.findOneAndUpdate(query, update, options).exec();
   }
 
-  static update(id: number, update: any): Promise<IUser> {
-    return new Promise<IUser>((resolve, reject) => {
-      User.findByIdAndUpdate(id, update, {new: true}, (err: any, result: IUser) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IUser[]> {
+    return User.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static find(query: any = {}): Promise<IUser[]> {
-    return new Promise<IUser[]>((resolve, reject) => {
-      User.find(query, (err: any, result: IUser[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async findById(userId: number): Promise<IUser> {
+    return User.findOne({ userId }).exec();
   }
 
-  static findById(id: number): Promise<IUser> {
-    return new Promise<IUser>((resolve, reject) => {
-      User.findById(id, (err: any, result: IUser) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async aggregate(query: any): Promise<any[]> {
+    return User.aggregate(query).allowDiskUse(true).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      User.aggregate(query, (err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async count(query?: any): Promise<number> {
+    return User.countDocuments(query || {}).exec();
   }
 
-  static findOneOrUpdate(query: any): Promise<any> {
-    return new Promise<any[]>((resolve, reject) => {
-      User.find(query, (err: any, result: IUser[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async deleteMany(query: any): Promise<any> {
+    return User.deleteMany(query).exec();
+  }
 
-        if (result[0]) {
-          resolve(result[0]._id);
-        } else {
-          const model = new User({
-            authId: query.authId,
-            bookmarks: [],
-            favorites: []
-          });
-          model.save((err: any, result: IUser) => {
-            if (err) {
-              reject(err);
-            }
+  static async deleteOne(query: any): Promise<any> {
+    return User.deleteOne(query).exec();
+  }
 
-            resolve(result && result._id);
-          });
-        }
-      });
+  static async findOneOrCreate(query: any): Promise<any> {
+    const user = await User.findOne(query).exec();
+
+    if (user) {
+      return user;
+    }
+
+    const model = new User({
+      authId: query.authId,
+      bookmarks: [],
+      favorites: []
     });
+    return await model.save();
   }
 }
 

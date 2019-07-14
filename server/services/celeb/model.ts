@@ -1,7 +1,10 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface ICeleb extends Document {
+  celebId: number;
+  algoliaId: string;
   name: string;
   hash: string;
   photo: string;
@@ -9,67 +12,68 @@ export interface ICeleb extends Document {
 }
 
 const celebSchema = new Schema({
+  celebId: Number,
+  algoliaId: String,
   name: String,
   hash: String,
   photo: String,
   dob: Date
 });
-
-celebSchema.plugin(autoIncrement.plugin, { model: "Celeb", startAt: 1 });
+celebSchema.index({celebId: 1}, {unique: true});
+celebSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Celeb", field: "celebId" });
+  (this as any).celebId = result.count;
+  next();
+});
 
 const Celeb = mongoose.model<ICeleb>("Celeb", celebSchema, "Celebs");
 
 export class CelebModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<ICeleb> {
     const model = new Celeb(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: ICeleb) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static update(id: number, update: any): Promise<ICeleb> {
-    return new Promise<ICeleb>((resolve, reject) => {
-      Celeb.findByIdAndUpdate(id, update, (err: any, result: ICeleb) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async update(celebId: number, update: any): Promise<ICeleb> {
+    const options = { upsert: true, returnNewDocument: true, new: true };
+    return Celeb.findOneAndUpdate({ celebId }, update, options).exec();
   }
 
-  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<ICeleb[]> {
-    return new Promise<ICeleb[]>((resolve, reject) => {
-      Celeb.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: ICeleb[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async bulkUpdate(queries: any[], updates: any[]): Promise<any> {
+    const bulk = Celeb.collection.initializeUnorderedBulkOp();
+    const length = queries.length;
 
-        resolve(result);
-      });
-    });
+    for (let i = 0; i < length; i++) {
+      bulk.find(queries[i]).update(updates[i]);
+    }
+
+    return bulk.execute();
   }
 
-  static findById(id: number): Promise<ICeleb> {
-    return new Promise<ICeleb>((resolve, reject) => {
-      Celeb.findById(id, (err: any, result: ICeleb) => {
-        if (err) {
-          reject(err);
-        }
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<ICeleb[]> {
+    return Celeb.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
+  }
 
-        resolve(result);
-      });
-    });
+  static async findById(celebId: number): Promise<ICeleb> {
+    return Celeb.findOne({ celebId }).exec();
+  }
+
+  static async aggregate(query: any): Promise<any[]> {
+    return Celeb.aggregate(query).allowDiskUse(true).exec();
+  }
+
+  static async count(query?: any): Promise<number> {
+    return Celeb.countDocuments(query || {}).exec();
+  }
+
+  static async deleteMany(query: any): Promise<any> {
+    return Celeb.deleteMany(query).exec();
+  }
+
+  static async deleteOne(celebId: number): Promise<any> {
+    return Celeb.deleteOne({ celebId }).exec();
   }
 }
 

@@ -1,7 +1,9 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IReview extends Document {
+  reviewId: number;
   userId: number;
   movieId: number;
   rating: number;
@@ -13,6 +15,7 @@ export interface IReview extends Document {
 }
 
 const reviewSchema = new Schema({
+  reviewId: Number,
   userId: Number,
   movieId: Number,
   rating: Number,
@@ -22,8 +25,13 @@ const reviewSchema = new Schema({
   story: String,
   timestamp: Number
 });
+reviewSchema.index({reviewId: 1}, {unique: true});
+reviewSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Review", field: "reviewId" });
+  (this as any).reviewId = result.count;
+  next();
+});
 
-reviewSchema.plugin(autoIncrement.plugin, { model: "Review", startAt: 1 });
 reviewSchema.index({userId: 1}, {unique: false});
 reviewSchema.index({movieId: 1}, {unique: false});
 reviewSchema.index({movieId: 1, userId: 1}, {unique: true});
@@ -54,118 +62,39 @@ Review.schema.path("story").validate((value) => {
 export class ReviewModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IReview> {
     const model = new Review(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IReview) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static deleteMany(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      Review.deleteMany(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
+  static async findAndUpdate(query: any, update: any): Promise<IReview> {
+    const result = await Review.findOne(query).exec();
 
-        resolve();
-      });
-    });
+    if (result) {
+      return await Review.findByIdAndUpdate(result._id, update).exec();
+    }
+
+    return this.create(update);
   }
 
-  static deleteOne(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      Review.deleteOne(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve();
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IReview[]> {
+    return Review.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static update(query: any, update: any): Promise<IReview> {
-    const options =  {upsert: true, new: true, runValidators: true };
-
-    return new Promise<IReview>((resolve, reject) => {
-      // Review.findOneAndUpdate(query, update, options, (err: any, result: IReview) => {
-      //   console.log(err, result);
-
-      //   if (err) {
-      //     reject(err);
-      //   }
-
-      //   resolve(result);
-      // });
-
-      Review.findOne(query, (err: any, result: IReview) => {
-        if (err) {
-          reject(err);
-        }
-
-        if (result) {
-          Review.findByIdAndUpdate(result._id, update, (err: any, result: IReview) => {
-            if (err) {
-              reject(err);
-            }
-
-            resolve(result);
-          });
-        } else {
-          const model = new Review(update);
-          model.save((err: any, result: IReview) => {
-            if (err) {
-              reject(err);
-            }
-
-            resolve(result);
-          });
-        }
-      });
-    });
+  static async findById(reviewId: number): Promise<IReview> {
+    return Review.findOne({ reviewId }).exec();
   }
 
-  static find(query: any = {}): Promise<IReview[]> {
-    return new Promise<IReview[]>((resolve, reject) => {
-      Review.find(query, (err: any, result: IReview[]) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(result);
-      });
-    });
+  static async aggregate(query: any): Promise<any[]> {
+    return Review.aggregate(query).allowDiskUse(true).exec();
   }
 
-  static findById(id: number): Promise<IReview> {
-    return new Promise<IReview>((resolve, reject) => {
-      Review.findById(id, (err: any, result: IReview) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async deleteMany(query: any): Promise<any> {
+    return Review.deleteMany(query).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      Review.aggregate(query, (err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async deleteOne(query: any): Promise<any> {
+    return Review.deleteOne(query).exec();
   }
 }
 

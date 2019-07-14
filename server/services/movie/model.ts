@@ -1,94 +1,88 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IMovie extends Document {
+  movieId: number;
+  algoliaId: string;
   title: string;
   description: string;
   cert: string;
   poster: string;
   genre: [string];
   runtime: number;
-  releasedate: Date;
+  releaseDate: Date;
+  hash: string;
 }
 
-const movieSchema = new Schema({
+const movieSchema = new mongoose.Schema({
+  movieId: Number,
+  algoliaId: String,
   title: String,
   description: String,
   cert: String,
   poster: String,
   genre: [String],
   runtime: Number,
-  releasedate: Date
+  releaseDate: Date,
+  hash: String
 });
-
-movieSchema.plugin(autoIncrement.plugin, { model: "Movie", startAt: 1 });
+movieSchema.index({movieId: 1}, {unique: true});
 movieSchema.index({ title: "text" });
+movieSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Movie", field: "movieId" });
+  (this as any).movieId = result.count;
+  next();
+});
 
 const Movie = mongoose.model<IMovie>("Movie", movieSchema, "Movies");
 
 export class MovieModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IMovie> {
     const model = new Movie(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IMovie) => {
-        if (err || !result) {
-          reject(err);
-        }
-
-        resolve(result && result._id);
-      });
-    });
+    return model.save();
   }
 
-  static update(id: number, update: any): Promise<IMovie> {
-    return new Promise<IMovie>((resolve, reject) => {
-      Movie.findByIdAndUpdate(id, update, (err: any, result: IMovie) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async update(movieId: number, update: any): Promise<IMovie> {
+    const options = { upsert: true, returnNewDocument: true, new: true };
+    return Movie.findOneAndUpdate({ movieId }, update, options).exec();
   }
 
-  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IMovie[]> {
-    return new Promise<IMovie[]>((resolve, reject) => {
-      Movie.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: IMovie[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async bulkUpdate(queries: any[], updates: any[]): Promise<any> {
+    const bulk = Movie.collection.initializeUnorderedBulkOp();
+    const length = queries.length;
 
-        resolve(result);
-      });
-    });
+    for (let i = 0; i < length; i++) {
+      bulk.find(queries[i]).update(updates[i]);
+    }
+
+    return bulk.execute();
   }
 
-  static findById(id: number): Promise<IMovie> {
-    return new Promise<IMovie>((resolve, reject) => {
-      Movie.findById(id, (err: any, result: IMovie) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IMovie[]> {
+    return Movie.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      Movie.aggregate(query).allowDiskUse(true).exec((err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
+  static async findById(movieId: number): Promise<IMovie> {
+    return Movie.findOne({ movieId }).exec();
+  }
 
-        resolve(result);
-      });
-    });
+  static async aggregate(query: any): Promise<any[]> {
+    return Movie.aggregate(query).allowDiskUse(true).exec();
+  }
+
+  static async count(query?: any): Promise<number> {
+    return Movie.countDocuments(query || {}).exec();
+  }
+
+  static async deleteMany(query: any): Promise<any> {
+    return Movie.deleteMany(query).exec();
+  }
+
+  static async deleteOne(movieId: number): Promise<any> {
+    return Movie.deleteOne({ movieId }).exec();
   }
 }
 

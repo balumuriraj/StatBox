@@ -3,62 +3,66 @@ import { IReview, ReviewModel } from "./model";
 async function generateReviewsData(reviews: IReview[]) {
   const result: any[] = [];
 
-  for (const review of reviews) {
-    const resultReview = await generateReviewData(review);
-    result.push(resultReview);
+  if (reviews) {
+    for (const review of reviews) {
+      const resultReview = await generateReviewData(review);
+      result.push(resultReview);
+    }
   }
 
   return result;
 }
 
 async function generateReviewData(review: IReview) {
-  return {
-    id: review._id,
-    userId: review.userId,
-    rating: review.rating,
-    movieId: review.movieId,
-    watchWith: review.watchWith,
-    pace: review.pace,
-    rewatch: review.rewatch,
-    story: review.story
-  };
+  if (review) {
+    return {
+      id: review.reviewId,
+      userId: review.userId,
+      rating: review.rating,
+      movieId: review.movieId,
+      watchWith: review.watchWith,
+      pace: review.pace,
+      rewatch: review.rewatch,
+      story: review.story
+    };
+  }
 }
 
-export async function removeUserReviews(userId: number) {
-  return await ReviewModel.deleteMany({ userId });
+export async function deleteReviews(query: any) {
+  return await ReviewModel.deleteMany(query);
 }
 
 export async function findReviewsByIds(ids: number[]) {
-  const query = { _id: { $in: ids } };
-  const reviews = await ReviewModel.find(query);
+  const query = { reviewId: { $in: ids } };
+  const reviews = await ReviewModel.find([query]);
   return await generateReviewsData(reviews);
 }
 
 export async function findUserReviewsByMovieIds(userId: number, movieIds: number[]) {
   const query = { movieId: { $in: movieIds }, userId };
-  const reviews = await ReviewModel.find(query);
+  const reviews = await ReviewModel.find([query]);
   return await generateReviewsData(reviews);
 }
 
 export async function findReviewsByMovieId(movieId: number) {
-  const reviews = await ReviewModel.find({ movieId });
+  const reviews = await ReviewModel.find([{ movieId }]);
   return await generateReviewsData(reviews);
 }
 
 export async function findReviewsByMovieIds(movieIds: number[]) {
   const query = { movieId: { $in: movieIds } };
-  const reviews = await ReviewModel.find(query);
+  const reviews = await ReviewModel.find([query]);
   return await generateReviewsData(reviews);
 }
 
 export async function findReviewsByUserId(userId: number) {
-  const reviews = await ReviewModel.find({ userId });
+  const reviews = await ReviewModel.find([{ userId }]);
   return await generateReviewsData(reviews);
 }
 
 export async function findReviewsByUserIds(userIds: number[]) {
   const query = { userId: { $in: userIds } };
-  const reviews = await ReviewModel.find(query);
+  const reviews = await ReviewModel.find([query]);
   return await generateReviewsData(reviews);
 }
 
@@ -66,7 +70,7 @@ export async function findReviewIdsByUserIds(userIds: number[], skip: number, li
   const where: any = { userId: { $in: userIds } };
   const group: any = {
     _id: "$userId",
-    reviewIds: { $push: { _id: "$_id" } }
+    reviewIds: { $push: { reviewId: "$reviewId" } }
   };
 
   const query = [
@@ -79,7 +83,7 @@ export async function findReviewIdsByUserIds(userIds: number[], skip: number, li
   const res: any = {};
 
   results.forEach((result) => {
-    res[result._id] = result.reviewIds.map((obj) => obj._id);
+    res[result.reviewId] = result.reviewIds.map((obj) => obj.reviewId);
   });
 
   return res;
@@ -91,7 +95,7 @@ export async function addOrUpdateReview(review: any) {
   }
 
   const query = { userId: review.userId, movieId: review.movieId };
-  const result = await ReviewModel.update(query, review);
+  const result = await ReviewModel.findAndUpdate(query, review);
   return await generateReviewData(result);
 }
 
@@ -127,7 +131,7 @@ export async function findReviewCountsByUserIds(userIds: number[]) {
   const counts: any = {};
 
   results.forEach((result) => {
-    counts[result._id] = result.count;
+    counts[result.reviewId] = result.count;
   });
 
   return counts;

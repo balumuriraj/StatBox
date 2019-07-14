@@ -1,7 +1,9 @@
-import { Document, Model, Schema } from "mongoose";
-import { autoIncrement, mongoose } from "../../config/database";
+import { Document, Schema } from "mongoose";
+import { mongoose } from "../../config/database";
+import { CounterModel } from "../counter/model";
 
 export interface IVote extends Document {
+  voteId: number;
   pollId: number;
   userId: number;
   movieId: number;
@@ -9,130 +11,52 @@ export interface IVote extends Document {
 }
 
 const voteSchema = new Schema({
+  voteId: Number,
   pollId: Number,
   userId: Number,
   movieId: Number,
   timestamp: Number
 });
-
-voteSchema.plugin(autoIncrement.plugin, { model: "Vote", startAt: 1 });
+voteSchema.index({voteId: 1}, {unique: true});
+voteSchema.pre("save", async function(next) {
+  const result = await CounterModel.findOneAndUpdate({ name: "Vote", field: "voteId" });
+  (this as any).voteId = result.count;
+  next();
+});
 
 const Vote = mongoose.model<IVote>("Vote", voteSchema, "Votes");
 
 export class VoteModel {
   constructor() {}
 
-  static create(props?: any): Promise<number> {
+  static async create(props?: any): Promise<IVote> {
     const model = new Vote(props);
-
-    return new Promise<number>((resolve, reject) => {
-      model.save((err: any, result: IVote) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result._id);
-      });
-    });
+    return model.save();
   }
 
-  static deleteMany(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      Vote.deleteMany(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve();
-      });
-    });
+  static async update(query: any, update: any): Promise<IVote> {
+    const options =  { upsert: true, returnNewDocument: true, new: true, runValidators: true };
+    return Vote.findOneAndUpdate(query, update, options).exec();
   }
 
-  static deleteOne(query: any): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      Vote.deleteOne(query, (err: any) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve();
-      });
-    });
+  static async find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IVote[]> {
+    return Vote.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec();
   }
 
-  static update(query: any, update: any): Promise<IVote> {
-    return new Promise<IVote>((resolve, reject) => {
-      // Vote.findOneAndUpdate(query, update, options, (err: any, result: IVote) => {
-      //   console.log(err, result);
-
-      //   if (err) {
-      //     reject(err);
-      //   }
-
-      //   resolve(result);
-      // });
-
-      Vote.findOne(query, (err: any, result: IVote) => {
-        if (err) {
-          reject(err);
-        }
-
-        if (result) {
-          Vote.findByIdAndUpdate(result._id, update, (err: any, result: IVote) => {
-            if (err) {
-              reject(err);
-            }
-
-            resolve(result);
-          });
-        } else {
-          const model = new Vote(update);
-          model.save((err: any, result: IVote) => {
-            if (err) {
-              reject(err);
-            }
-
-            resolve(result);
-          });
-        }
-      });
-    });
+  static async findById(voteId: number): Promise<IVote> {
+    return Vote.findOne({ voteId }).exec();
   }
 
-  static find(query: any[] = [], sort?: any, limitCount?: number, skipCount?: number): Promise<IVote[]> {
-    return new Promise<IVote[]>((resolve, reject) => {
-      Vote.find(...query).sort(sort).limit(limitCount).skip(skipCount).exec((err: any, result: IVote[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async aggregate(query: any): Promise<any[]> {
+    return Vote.aggregate(query).allowDiskUse(true).exec();
   }
 
-  static findById(id: number): Promise<IVote> {
-    return new Promise<IVote>((resolve, reject) => {
-      Vote.findById(id, (err: any, result: IVote) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async deleteMany(query: any): Promise<any> {
+    return Vote.deleteMany(query).exec();
   }
 
-  static aggregate(query: any): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      Vote.aggregate(query, (err: any, result: any[]) => {
-        if (err) {
-          reject(err);
-        }
-
-        resolve(result);
-      });
-    });
+  static async deleteOne(query: any): Promise<any> {
+    return Vote.deleteOne(query).exec();
   }
 }
 
