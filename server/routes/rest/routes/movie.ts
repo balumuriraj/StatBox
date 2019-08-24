@@ -20,8 +20,8 @@ const routes = [
     route: "/movies",
     method: "GET",
     callback: async (req, res) => {
-      const skip = Number(req.query.skip);
-      const limit = Number(req.query.limit);
+      const skip = req.query.skip ? Number(req.query.skip) : 0;
+      const limit = req.query.limit ? Number(req.query.limit) : 10;
       const movieIds = await findMoviesByFilter([], [], "movieId", limit, skip);
       const movies = await findMoviesByIds(movieIds);
       res.send(movies);
